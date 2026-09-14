@@ -121,105 +121,7 @@ namespace BLL.SQLProcessing
 
                 schemaID = (long)tmp;
             }
-            //string getAttributes = $@"SELECT attr.*, type.type_name 
-            //    FROM fprdb_Attribute as attr
-            //    JOIN fprdb_Type as type on attr.att_type_id=type.oid
-            //    WHERE att_relschema_id={schemaID};";
-            //reader = this.dbMgr.executeQuery(getAttributes);
-            //List<Field> fieldList = new List<Field>();
-            //using (reader)
-            //{
-            //    if (!reader.Read())
-            //        throw new SQLExecutionException($"Schema {data.getSchemaName()} has no attribute");
-            //    do
-            //    {
-            //        Field field = new Field(
-            //            (string)reader["att_name"],
-            //            new FieldInfo(Enum.Parse<FieldType>((string)reader["type_name"]), Convert.ToInt32(reader["att_type_mod"]))
-            //        );
-            //        fieldList.Add(field);
-            //    }
-            //    while (reader.Read());
-            //}
-
-            //string createTableForRelationSQL = $@"CREATE TABLE {data.getRelName()} (";
             
-
-            //foreach (Field field in fieldList)
-            //{
-            //    FieldInfo fieldInfo = field.getFieldInfo();
-
-
-            //    string fieldDef = $"{field.getFieldName()} {fieldInfo.getType().ToString()}";
-            //    if (fieldInfo.getType() == FieldType.VARCHAR)
-            //    {
-            //        fieldDef += $"({fieldInfo.getTXTLength()})";
-            //    }
-            //    fieldDef += ",";
-            //    createTableForRelationSQL += fieldDef;
-            //}
-
-            //string primaryKeyConstraint = $"PRIMARY KEY (";
-            //foreach (string keyAttribute in data.getPrimarykey())
-            //{
-            //    primaryKeyConstraint += keyAttribute + ",";
-            //}
-            //primaryKeyConstraint = primaryKeyConstraint.TrimEnd(',');
-            //primaryKeyConstraint += ")";
-            //createTableForSchemaSQL += primaryKeyConstraint + ")";
-
-
-            //this.dbMgr.executeNonQuery(createTableForSchemaSQL);
-            //string getAttributes = $@"SELECT attr.*, type.type_name 
-            //    FROM fprdb_Attribute as attr
-            //    JOIN fprdb_Type as type on attr.att_type_id=type.oid
-            //    WHERE att_relschema_id={schemaID};";
-            //reader = this.dbMgr.executeQuery(getAttributes);
-            //List<Field> fieldList = new List<Field>();
-            //using (reader)
-            //{
-            //    if (!reader.Read())
-            //        throw new SQLExecutionException($"Schema {data.getSchemaName()} has no attribute");
-            //    do
-            //    {
-            //        Field field = new Field(
-            //            (string)reader["att_name"],
-            //            new FieldInfo(Enum.Parse<FieldType>((string)reader["type_name"]), Convert.ToInt32(reader["att_type_mod"]))
-            //        );
-            //        fieldList.Add(field);
-            //    }
-            //    while (reader.Read());
-            //}
-
-            //string createTableForRelationSQL = $@"CREATE TABLE {data.getRelName()} (";
-            
-
-            //foreach (Field field in fieldList)
-            //{
-            //    FieldInfo fieldInfo = field.getFieldInfo();
-
-
-            //    string fieldDef = $"{field.getFieldName()} {fieldInfo.getType().ToString()}";
-            //    if (fieldInfo.getType() == FieldType.VARCHAR)
-            //    {
-            //        fieldDef += $"({fieldInfo.getTXTLength()})";
-            //    }
-            //    fieldDef += ",";
-            //    createTableForRelationSQL += fieldDef;
-            //}
-
-            //string primaryKeyConstraint = $"PRIMARY KEY (";
-            //foreach (string keyAttribute in data.getPrimarykey())
-            //{
-            //    primaryKeyConstraint += keyAttribute + ",";
-            //}
-            //primaryKeyConstraint = primaryKeyConstraint.TrimEnd(',');
-            //primaryKeyConstraint += ")";
-            //createTableForSchemaSQL += primaryKeyConstraint + ")";
-
-
-            //this.dbMgr.executeNonQuery(createTableForSchemaSQL);
-
             string getAttributes = $@"SELECT att_name 
                 FROM fprdb_Attribute 
                 WHERE att_relschema_id={schemaID};";
@@ -247,7 +149,8 @@ namespace BLL.SQLProcessing
                 string fieldDef = $"{name} TEXT,";
                 createTableForRelationSQL += fieldDef;
             }
-            createTableForRelationSQL = createTableForRelationSQL.TrimEnd(',');
+            //add fields lower_membership_degree, upper_membership_degree to represent tuple's membership dgree
+            createTableForRelationSQL += "lower_membership_degree real, upper_membership_degree real";
             createTableForRelationSQL += ")";
 
             this.dbMgr.executeNonQuery(createTableForRelationSQL);
