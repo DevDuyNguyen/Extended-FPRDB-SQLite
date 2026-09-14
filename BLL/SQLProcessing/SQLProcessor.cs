@@ -1,0 +1,232 @@
+﻿using BLL.DomainObject;
+using BLL.Exceptions;
+using BLL.Interfaces;
+using BLL.Services;
+using BLL.SQLProcessing;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BLL.SQLProcessing
+{
+    public class SQLProcessor
+    {
+        private RecursiveDescentParser parser;
+        private UpdatePlanner updatePlanner;
+        private Preprocessor preProcessor;
+        private QueryPlanner queryPlanner;
+        private Lexer lexer;
+        private ConstraintService constraintService;
+
+        public SQLProcessor(RecursiveDescentParser parser, UpdatePlanner updatePlanner, Preprocessor preProcessor, QueryPlanner queryPlanner, Lexer lexer, ConstraintService constraintService)
+        {
+            this.parser = parser;
+            this.updatePlanner = updatePlanner;
+            this.preProcessor = preProcessor;
+            this.queryPlanner = queryPlanner;
+            this.lexer = lexer;
+            this.constraintService = constraintService;
+        }
+
+        public bool executeDataDefinition(string sql)
+        {
+            if (sql == default || sql == null)
+                throw new InvalidOperationException("FPRDB-SQL command isn't provided");
+
+            this.parser.parse(sql);
+            Object data = this.parser.updateCommand();
+            if(data is FPRDBSchema)
+            {
+                FPRDBSchema createSchemaData = (FPRDBSchema)data;
+
+                if (this.preProcessor.checkSemanticCreateSchema(createSchemaData))
+                {
+                    this.updatePlanner.executeCreateSchema(createSchemaData);
+                    return true;
+                }
+                else
+                    return false;
+                
+            }
+            else if(data is FPRDBRelation)
+            {
+                FPRDBRelation createRelationData = (FPRDBRelation)data;
+                if (this.preProcessor.checkSemanticCreateRelation(createRelationData))
+                {
+                    this.updatePlanner.executeCreateRelation(createRelationData);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            else if (data is DropRelationData)
+            {
+                DropRelationData DropData = (DropRelationData)data;
+                if (this.preProcessor.checkSemanticDropRelation(DropData) && this.constraintService.checkIfDropRelationViolateReferentialConstraint(DropData))
+                {
+                    this.updatePlanner.executeDropRelation(DropData.relation);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            else //if (data is DropSchemaData)
+            {
+                DropSchemaData DropData = (DropSchemaData)data;
+                if (this.preProcessor.checkSemanticDropSchema(DropData))
+                {
+                    this.updatePlanner.executeDropSchema(DropData.schema);
+                    return true;
+                }
+                else
+                    return false;
+            }
+        }
+        public int executeUpdate(string sql)
+        {
+            if (sql == default || sql == null)
+                throw new InvalidOperationException("Parameter sql isn't provided");
+
+            this.parser.parse(sql);
+            Object data = this.parser.updateCommand();
+            if(data is InsertData)
+            {
+                InsertData idata = (InsertData)data;
+                if (this.preProcessor.checkSemanticInsert(idata) 
+                    && this.constraintService.checkIntegrityConstraintInsert(idata) 
+                    && this.constraintService.checkIfInsertTupleViolateReferentialConstraint(idata))
+                {
+                        
+                    return this.updatePlanner.executeInsert(idata);
+                }
+            }
+            else if(data is DeleteData)
+            {
+                DeleteData dData = (DeleteData)data;
+                if (this.preProcessor.checkSemanticDelete(dData) && this.constraintService.checkIfDeleteTupleViolateReferentialConstraint(dData))
+                {
+                    return this.updatePlanner.executeDelete(dData);
+                }
+            }
+            else //if(data is ModifyData)
+            {
+                ModifyData mData = (ModifyData)data;
+                if (this.preProcessor.checkSemanticModify(mData) && this.constraintService.checkIfUpdatingTupleViolateReferentialConstraint(mData))
+                {
+                    return this.updatePlanner.executeModify(mData);
+                }
+            }
+            return 0;
+        }
+        public Plan createQueryPlan(string sql)
+        {
+            this.parser.parse(sql);
+            QueryData data = this.parser.query(true);
+
+            if(this.preProcessor.checkSemanticQuery(data))
+                return this.queryPlanner.createPlan(data);
+
+            return null;
+
+        }
+        public float calculateProbabilisticInterpretationForRelationOnFuzzySetsExpression(string expression)
+        {
+            this.parser.parse(expression);
+            RelationOnFuzzySetExpressionData data = this.parser.relationOnFuzzySetsExpression();
+
+            if (this.preProcessor.checkSemanticRelationOnFuzzySetExpression(data))
+            {
+                return this.queryPlanner.calculateProbabilisticInterpretationForRelationOnFuzzySetsExpression(data);
+            }
+            return -1;
+        }
+        public TheoryCheckSelectPlan calculateProbabilisticInterpretationForSelectionExpressionOnSpecifiedTuples(string expression)
+        {
+            this.parser.parse(expression);
+            SelectionExpressionOnSpecifiedTuplesData data = this.parser.selectionExpressionOnSpecifiedTuples();
+            if (this.preProcessor.checkSemanticCalculateProbabilisticInterpretationForSelectionExpreesionOnSpecifiedTuples(data)){
+                return this.queryPlanner.createPlanForCalculatingProbabilisticInterpretationForSelectionOnSpeficifiedTuple(data);
+            }
+            return null;
+        }
+        private bool isFPRDBSQLStatementOfDataDefinitionLanguage(string stm)
+        {
+            string firstWord;
+            stm = stm.TrimStart([' ', '\r', '\n']);
+            int index = stm.IndexOf(' ');
+            if (index == -1)
+                return false;
+            firstWord = stm.Substring(0, index);
+            firstWord = firstWord.ToLower();
+            switch (firstWord)
+            {
+                case "create":
+                case "drop":
+                    return true;
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+        }
+        private bool isFPRDBSQLStatementOfDataManipulationLanguage(string stm)
+        {
+            string firstWord;
+            stm = stm.TrimStart([' ', '\r', '\n']);
+            int index = stm.IndexOf(' ');
+            if (index == -1)
+                return false;
+            firstWord = stm.Substring(0, index);
+            firstWord = firstWord.ToLower();
+            switch (firstWord)
+            {
+                case "insert":
+                case "delete":
+                case "update":
+                    return true;
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+        }
+        public List<FPRDBSQLExecutionResult> executeFPRDBSQLStatements(string fprdbSQLStatements)
+        {
+            List<FPRDBSQLExecutionResult> executionResults = new List<FPRDBSQLExecutionResult>();
+
+            fprdbSQLStatements = fprdbSQLStatements.TrimStart([' ', '\r', '\n']);
+            fprdbSQLStatements = fprdbSQLStatements.TrimEnd([';', ' ', '\r', '\n']);
+
+            string[] individualStatements = fprdbSQLStatements.Split(';');
+            string stm;
+            Plan tmpPlan;
+
+            for(int i=0; i<individualStatements.Length; ++i)
+            {
+                stm = individualStatements[i].TrimStart(' ');
+
+
+                if (isFPRDBSQLStatementOfDataDefinitionLanguage(stm))
+                {
+                    this.executeDataDefinition(stm);
+                    executionResults.Add(new DDL_FPRDB_SQL_ExecutionResult(true));
+                }
+                else if (isFPRDBSQLStatementOfDataManipulationLanguage(stm))
+                {
+                    executionResults.Add(new DML_FPRDB_SQL_ExecutionResult(this.executeUpdate(stm)));
+                }
+                else
+                {
+                    tmpPlan = this.createQueryPlan(stm);
+                    executionResults.Add(new DQL_FPRDB_SQL_ExecutionResult(new InMemoryScan(tmpPlan)));
+                }
+            }
+            return executionResults;
+        }
+
+    }
+}

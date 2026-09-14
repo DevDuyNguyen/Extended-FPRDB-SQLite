@@ -1,0 +1,339 @@
+﻿using BLL.Common;
+using BLL.DomainObject;
+using BLL.DTO;
+using BLL.Exceptions;
+using BLL.Interfaces;
+using BLL.SQLProcessing;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SQLite;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+
+namespace BLL.DAO
+{
+    public class FuzzySetDAOSQLite:FuzzySetDAO
+    {
+        private DatabaseManager databaseManager;
+        private DatabaseManager databseExportImport;
+        private MetadataManager metaDataMgr;
+
+        public FuzzySetDAOSQLite(DatabaseManager databaseManager, MetadataManager metaDataMgr)
+        {
+            this.databaseManager = databaseManager;
+            this.metaDataMgr= metaDataMgr;
+        }
+        //public FuzzySetDAOSQLite() { }
+        public List<T> convertStringToListOfT<T>(string str)
+        {
+            List<T> ans;
+            var type = typeof(T);
+            if (type== typeof(int) || type == typeof(float) || type==typeof(string))
+            {
+                ans = str.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(item => (T)Convert.ChangeType(item.Trim(), typeof(T), CultureInfo.InvariantCulture))
+                    .ToList();
+                return ans;
+            }
+            else
+            {
+                throw new NotSupportedException($"{typeof(T).Name} isn't supported");
+            }
+        }
+        private bool isElementXGetAssignedMembershipDegreeMoreThan1<T>(DiscreteFuzzySetDTO<T> fuzzySet)
+            where T:IComparable<T>
+        {
+            DiscreteFuzzySetSorter.MergeSortByValue<T>(fuzzySet);
+            for(int i=0; i<fuzzySet.valueSet.Count-1; ++i)
+            {
+                if (fuzzySet.valueSet[i].CompareTo(fuzzySet.valueSet[i + 1])==0)
+                    throw new InvalidOperationException($"{fuzzySet.valueSet[i]} is assigned membership degree more than 1 time");
+            }
+            return true;
+        }
+        //not done: Moq for mocking
+        public DiscreteFuzzySet<T> createDiscreteFuzzySet<T>(DiscreteFuzzySetDTO<T> fuzzySet)
+            where T : IComparable<T>
+        {
+            if (fuzzySet.fuzzySetName == "" || fuzzySet.fuzzySetName == null)
+                throw new InvalidDataException("Fuzzy set name is empty");
+            if ( fuzzySet.valueSet.Count == 0)
+                throw new InvalidDataException("Fuzzy set name's universe of discourse is empty");
+            if (fuzzySet.valueSet.Count!=fuzzySet.membershipDegreeSet.Count)
+                throw new InvalidDataException("Fuzzy set number of elements in the universe of discourse doesn't match number of membership degrees");
+
+            for (int i = 0; i < fuzzySet.valueSet.Count; ++i)
+            {
+                if (fuzzySet.membershipDegreeSet[i] < 0 || fuzzySet.membershipDegreeSet[i] > 1)
+                    throw new InvalidDataException("Membership degree must be within [0,1]");
+                if (fuzzySet.valueSet[i] == null)
+                    throw new InvalidOperationException("value can't be null");
+            }
+
+            isElementXGetAssignedMembershipDegreeMoreThan1<T>(fuzzySet);
+
+
+            try
+            {
+                string checkIfFuzzSetExist = $" SELECT 1 FROM fprdb_FuzzySet AS FS  WHERE FS.fuzzset_name = '{fuzzySet.fuzzySetName}';";
+                using(IDataReader r = this.databaseManager.executeQuery(checkIfFuzzSetExist))
+                {
+                    if (r.Read())
+                        throw new InvalidDataException($"Fuzzy set {fuzzySet.fuzzySetName} already exists");
+                }
+
+                string fieldTypeName = fuzzySet.fuzzySetType.ToString();
+                long fieldTypeID = this.databaseManager.executeScalar<long>($"SELECT oid FROM fprdb_Type WHERE type_name='{fieldTypeName}'");
+                string insert_fprdb_FuzzySet = $"INSERT INTO fprdb_FuzzySet (fuzzset_name, fuzzset_type_id) VALUES ('{fuzzySet.fuzzySetName}',{fieldTypeID})";
+                this.databaseManager.executeNonQuery(insert_fprdb_FuzzySet);
+
+                long fuzzySetID = this.databaseManager.executeScalar<long>($"SELECT oid FROM fprdb_FuzzySet WHERE fuzzset_name='{fuzzySet.fuzzySetName}'");
+                string valueSetStr = string.Join(",", fuzzySet.valueSet);
+                string membershipDegreesStr = string.Join(",", fuzzySet.membershipDegreeSet);
+                string insert_fprdb_DiscreteFuzzySet = $"INSERT INTO fprdb_DiscreteFuzzySet (oid,fuzzset_x, fuzzset_membership_degree) VALUES ({fuzzySetID},'{valueSetStr}','{membershipDegreesStr}');";
+
+                this.databaseManager.executeNonQuery(insert_fprdb_DiscreteFuzzySet);
+
+                string selectNewlyCreatedFuzzSet = $@"
+                    SELECT 
+                        FS.oid,
+                        FS.fuzzset_name,
+                        type.type_name,
+                        distFS.fuzzset_x,
+                        distFS.fuzzset_membership_degree
+                    FROM fprdb_FuzzySet AS FS
+                    JOIN fprdb_DiscreteFuzzySet AS distFS ON FS.oid = distFS.oid
+                    JOIN fprdb_Type AS type ON type.oid = FS.fuzzset_type_id
+                    WHERE FS.fuzzset_name = '{fuzzySet.fuzzySetName}';
+                    ";
+
+                IDataReader reader = this.databaseManager.executeQuery(selectNewlyCreatedFuzzSet);
+                DiscreteFuzzySet<T> res;
+                if (reader.Read())
+                {
+                    List<T> valueList = convertStringToListOfT<T>((string)reader["fuzzset_x"]);
+                    List<float> membershipDegreeList = convertStringToListOfT<float>((string)reader["fuzzset_membership_degree"]);
+#if NET8_0_OR_GREATER
+                    res = new DiscreteFuzzySet<T>(valueList, membershipDegreeList,
+                        (string)reader["fuzzset_name"], Enum.Parse<FieldType>((string)reader["type_name"]),-1);
+#else
+                    res = new DiscreteFuzzySet<T>(valueList, membershipDegreeList,
+                        (string)reader["fuzzset_name"], (FieldType)Enum.Parse(typeof(FieldType), (string)reader["type_name"]),-1);
+#endif
+                    return res;
+                }
+                else
+                    throw new newlyCreatedTupleNotFoundException();
+
+            }
+            catch(SQLiteException ex)
+            {
+                throw new SQLExecutionException("Something when wrong with sqlite");
+            }
+
+        }
+
+        public ContinuousFuzzySet createContinuousFuzzySet(ContinuousFuzzySetDTO fuzzySet)
+        {
+            if (fuzzySet.fuzzySetName == "" || fuzzySet.fuzzySetName == null)
+                throw new InvalidDataException("Fuzzy set name is empty");
+            if (!(fuzzySet.leftBottom <= fuzzySet.leftTop && fuzzySet.leftTop <= fuzzySet.rightTop && fuzzySet.rightTop <= fuzzySet.rightBottom))
+            {
+                throw new InvalidDataException("Continuous fuzzy set's memberhsip degree function must be a trapazoid or triangle");
+            }
+            try
+            {
+                string checkIfFuzzSetExist = $" SELECT 1 FROM fprdb_FuzzySet AS FS  WHERE FS.fuzzset_name = '{fuzzySet.fuzzySetName}';";
+                using (IDataReader r = this.databaseManager.executeQuery(checkIfFuzzSetExist))
+                {
+                    if (r.Read())
+                        throw new InvalidDataException($"Fuzzy set {fuzzySet.fuzzySetName} already exists");
+                }
+
+                string fieldTypeName = fuzzySet.fuzzySetType.ToString();
+                long fieldTypeID = this.databaseManager.executeScalar<long>($"SELECT oid FROM fprdb_Type WHERE type_name='{fieldTypeName}'");
+                string insert_fprdb_FuzzySet = $"INSERT INTO fprdb_FuzzySet (fuzzset_name, fuzzset_type_id) " +
+                    $"VALUES ('{fuzzySet.fuzzySetName}',{fieldTypeID})";
+                this.databaseManager.executeNonQuery(insert_fprdb_FuzzySet);
+
+                long fuzzySetID = this.databaseManager.executeScalar<long>($"SELECT oid FROM fprdb_FuzzySet WHERE fuzzset_name='{fuzzySet.fuzzySetName}'");
+                string insert_fprdb_ContinousFuzzySet = $"INSERT INTO fprdb_ContinousFuzzySet (oid,fuzzset_bottom_left, fuzzset_top_left, fuzzset_top_right, fuzzset_bottom_right) " +
+                    $"VALUES ({fuzzySetID},{fuzzySet.leftBottom},{fuzzySet.leftTop},{fuzzySet.rightTop},{fuzzySet.rightBottom});";
+
+                this.databaseManager.executeNonQuery(insert_fprdb_ContinousFuzzySet);
+
+                string selectNewlyCreatedFuzzSet = $@"
+                    SELECT 
+                        FS.oid,
+                        FS.fuzzset_name,
+                        CONT_FUZZYSET.fuzzset_bottom_left,
+                        CONT_FUZZYSET.fuzzset_top_left,
+                        CONT_FUZZYSET.fuzzset_top_right,
+                        CONT_FUZZYSET.fuzzset_bottom_right
+                    FROM fprdb_FuzzySet AS FS
+                    JOIN fprdb_ContinousFuzzySet AS CONT_FUZZYSET 
+                        ON FS.oid = CONT_FUZZYSET.oid
+                    WHERE FS.fuzzset_name = '{fuzzySet.fuzzySetName}';
+                    ";
+
+                IDataReader reader = this.databaseManager.executeQuery(selectNewlyCreatedFuzzSet);
+                ContinuousFuzzySet res;
+                if (reader.Read())
+                {
+                    
+                    res = new ContinuousFuzzySet(
+                        Convert.ToSingle(reader["fuzzset_bottom_left"]),
+                        Convert.ToSingle(reader["fuzzset_top_left"]),
+                        Convert.ToSingle(reader["fuzzset_top_right"]),
+                        Convert.ToSingle(reader["fuzzset_bottom_right"]),
+                        (string)reader["fuzzset_name"],
+                        -1);
+                    return res;
+                }
+                else
+                    throw new newlyCreatedTupleNotFoundException();
+
+            }
+            catch (SQLiteException ex)
+            {
+                throw new SQLExecutionException("Something went wrong with sqlite");
+            }
+
+        }
+        public List<BaseFuzzySet> findFuzzySet(string name)
+        {
+            //get all fuzzyset names that LIKE %name%
+            List<string> matchFuzzySetNames = new List<string>();
+            string findFuzzySetSQL;
+            //user want all fuzzy sets
+            if (name == null || name == default)
+                findFuzzySetSQL = "SELECT fuzzset_name FROM fprdb_FuzzySet";
+            else
+                findFuzzySetSQL = $"SELECT fuzzset_name FROM fprdb_FuzzySet WHERE fuzzset_name LIKE '%{name}%'";
+            IDataReader r;
+            using (r = this.databaseManager.executeQuery(findFuzzySetSQL))
+            {
+                while (r.Read())
+                {
+                    matchFuzzySetNames.Add(r["fuzzset_name"] as string);
+                }
+            }
+
+            //for each such fuzzy set name
+            //-get fuzzy type
+            //-get fuzzy 
+            //-add to answer list
+            FieldType fsType;
+            List<BaseFuzzySet> ans = new List<BaseFuzzySet>();
+            foreach (string fsName in matchFuzzySetNames)
+            {
+                fsType = this.metaDataMgr.getFuzzySetType(fsName);
+                if (fsType == FieldType.DIST_FUZZYSET_INT)
+                {
+                    ans.Add(this.metaDataMgr.getFuzzySet<int>(fsName, fsType));
+                }
+                else if (fsType == FieldType.DIST_FUZZYSET_FLOAT || fsType == FieldType.CONT_FUZZYSET)
+                {
+                    ans.Add(this.metaDataMgr.getFuzzySet<float>(fsName, fsType));
+                }
+                else //if (fsType == FieldType.DIST_FUZZYSET_TEXT)
+                {
+                    ans.Add(this.metaDataMgr.getFuzzySet<string>(fsName, fsType));
+                }
+            }
+            return ans;
+
+        }
+        public List<FPRDBRelation> getUsingRelations(FuzzySetDTO fuzzySet)
+        {
+            if(fuzzySet?.fuzzySetName==null)
+                throw new InvalidOperationException("Parameter fuzzySet.fuzzySetName can't be null");
+            int fsOID = this.metaDataMgr.getFuzzySetOID(fuzzySet.fuzzySetName);
+            List<int> usingRelationOIDs = new List<int>();
+            IDataReader r;
+            using (r = this.databaseManager.executeQuery($"SELECT rel_oid FROM FPRDB_Rel_FuzzSet WHERE fuzzset_oid={fsOID} AND no!=0"))
+            {
+                while (r.Read())
+                {
+                    usingRelationOIDs.Add(Convert.ToInt32(r["rel_oid"]));
+                }
+            }
+            List<FPRDBRelation> ans = new List<FPRDBRelation>();
+            foreach(int oid in usingRelationOIDs)
+            {
+                ans.Add(this.metaDataMgr.getRelationByID(oid));
+            }
+            return ans;
+
+        }
+        public void removeFuzzySet(FuzzySetDTO fuzzySet)
+        {
+            if (fuzzySet.oid == null || fuzzySet.oid == default)
+                throw new InvalidOperationException("Oid of fuzzy set isn't provided");
+            this.databaseManager.executeNonQuery($"DELETE FROM fprdb_DiscreteFuzzySet WHERE oid={fuzzySet.oid}");
+            this.databaseManager.executeNonQuery($"DELETE FROM fprdb_ContinousFuzzySet WHERE oid={fuzzySet.oid}");
+            this.databaseManager.executeNonQuery($"DELETE FROM FPRDB_Rel_FuzzSet WHERE fuzzset_oid={fuzzySet.oid}");
+            this.databaseManager.executeNonQuery($"DELETE FROM fprdb_FuzzySet WHERE oid={fuzzySet.oid}");
+
+        }
+        public FuzzySetDTO getExactFuzzySet(int oid)
+        {
+            if (oid == null || oid == default)
+                throw new InvalidOperationException($"Fuzzy set oid isn't provided");
+
+            FieldType fsType = this.metaDataMgr.getFuzzySetTypeByID(oid);
+            FuzzySetDTO dto=null;
+            if (fsType == FieldType.DIST_FUZZYSET_INT)
+            {
+                FuzzySet<int> tmp = this.metaDataMgr.getFuzzySetByID<int>(oid, fsType);
+                dto = tmp.toDTO();
+            }
+            else if (fsType == FieldType.DIST_FUZZYSET_FLOAT || fsType == FieldType.CONT_FUZZYSET)
+            {
+                FuzzySet<float> tmp = this.metaDataMgr.getFuzzySetByID<float>(oid, fsType);
+                dto = tmp.toDTO();
+            }
+            else //if (fsType == FieldType.DIST_FUZZYSET_TEXT)
+            {
+                FuzzySet<string> tmp = this.metaDataMgr.getFuzzySetByID<string>(oid, fsType);
+                dto = tmp.toDTO();
+            }
+            return dto;
+        }
+
+        public void updateDiscreteFuzzySet<T>(DiscreteFuzzySetDTO<T> fuzzySet)
+            where T:IComparable<T>
+        {
+            if (fuzzySet.oid == null || fuzzySet.oid == default)
+                throw new InvalidOperationException($"Fuzzy set {fuzzySet.fuzzySetName}'s oid isn't provided");
+            isElementXGetAssignedMembershipDegreeMoreThan1<T>(fuzzySet);
+            //string updateName = $"update fprdb_FuzzySet set fuzzset_name='{fuzzySet.fuzzySetName}' WHERE oid={fuzzySet.oid}";
+            //this.databaseManager.executeNonQuery(updateName);
+
+            string newValueSet = string.Join(",", fuzzySet.valueSet);
+            string newMembershipDegree = string.Join(",", fuzzySet.membershipDegreeSet);
+            string updateValueSetAndMembershipDegree = $"UPDATE fprdb_DiscreteFuzzySet set fuzzset_x='{newValueSet}', fuzzset_membership_degree='{newMembershipDegree}' WHERE oid={fuzzySet.oid}";
+            this.databaseManager.executeNonQuery(updateValueSetAndMembershipDegree);
+
+        }
+
+        public void updateContinuousFuzzySet(ContinuousFuzzySetDTO fuzzySet)
+        {
+            if (fuzzySet.oid == null || fuzzySet.oid == default)
+                throw new InvalidOperationException($"Fuzzy set {fuzzySet.fuzzySetName}'s oid isn't provided");
+
+            //string updateName = $"update fprdb_FuzzySet set fuzzset_name='{fuzzySet.fuzzySetName}' WHERE oid={fuzzySet.oid}";
+            //this.databaseManager.executeNonQuery(updateName);
+
+            string updateMembershipDegree = $"update fprdb_ContinousFuzzySet set fuzzset_bottom_left={fuzzySet.leftBottom}, fuzzset_top_left={fuzzySet.leftTop}, fuzzset_top_right={fuzzySet.rightTop}, fuzzset_bottom_right={fuzzySet.rightBottom} where oid={fuzzySet.oid}";
+            this.databaseManager.executeNonQuery(updateMembershipDegree);
+        }
+        public bool isFuzzySetExist(string name)
+        {
+            return this.metaDataMgr.isFuzzySetWithNameExist(name);
+        }
+
+    }
+}

@@ -1,0 +1,247 @@
+﻿using BLL;
+using BLL.Common;
+using BLL.DTO;
+using BLL.Exceptions;
+using BLL.Services;
+using DevExpress.XtraCharts;
+using DevExpress.XtraEditors;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+using GUI.HandlingException;
+using GUI.GlobalStates;
+
+namespace FPRDB_SQLite.GUI
+{
+    public partial class frmManageFuzzySet : DevExpress.XtraEditors.XtraForm
+    {
+        // Khai báo CompositionRoot để sử dụng các service
+        private CompositionRoot compRoot = new CompositionRoot();
+        // Khai báo Fuzzy Set Service
+        private FuzzySetService service;
+        // Khai báo danh sách để lưu kết quả tìm kiếm Fuzzy Set
+        private List<FuzzySetDTO> results;
+        // Khai báo DTO để lưu thông tin Fuzzy Set đang được chọn
+        private FuzzySetDTO selectedFuzzySet;
+        public frmManageFuzzySet(CompositionRoot compRoot)
+        {
+            if (AppStates.ISAppStateFullyLoad == false)
+                throw new InvalidOperationException("AppState isn't loaded");
+
+            InitializeComponent();
+            this.compRoot = compRoot;
+            this.service = compRoot.getFuzzySetService();
+        }
+
+        // Hàm xử lý khi nhấn nút "Search" để tìm kiếm Fuzzy Set theo tên
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Lấy thông tin từ ô tìm kiếm
+                string keyword = txtFuzzySetName.Text;
+
+                // Xóa danh sách trước đó trong ListBox
+                lstFuzzySetResults.Items.Clear();
+                // Lọc dữ liệu theo keyword
+
+                this.results = service.findFuzzySet(keyword);
+
+                if (results.Count == 0)
+                {
+                    MessageBox.Show("Cannot find any results.");
+                    return;
+                }
+
+                foreach (var item in this.results)
+                {
+                    lstFuzzySetResults.Items.Add(item.fuzzySetName);
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                HandlingExceptionViaErrorNotification.handlingInvalidOperationException(ex);
+            }
+            catch (UnderlyingStorageEngineCRUDException ex)
+            {
+                XtraMessageBox.Show($"Error: {ex.Message}", "UNDERLYING STORAGE MECHANISM ERROR", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+        // Hàm vẽ đồ thị của Continuous Fuzzy Set
+        private void drawChartContinuousFS(FuzzySetDTO fuzzySet)
+        {
+            tabpgFuzzySetChart.Controls.Clear();
+            ChartControl chart = new ChartControl();
+            ContinuousFuzzySetDTO continuousFuzzySet = fuzzySet as ContinuousFuzzySetDTO;
+            // Create series and add points
+            Series series = new Series(continuousFuzzySet.fuzzySetName, ViewType.Line);
+            series.Points.Add(new SeriesPoint(continuousFuzzySet.leftBottom.ToString(), 0));
+            series.Points.Add(new SeriesPoint(continuousFuzzySet.leftTop.ToString(), 1));
+            series.Points.Add(new SeriesPoint(continuousFuzzySet.rightTop.ToString(), 1));
+            series.Points.Add(new SeriesPoint(continuousFuzzySet.rightBottom.ToString(), 0));
+            // Add series to chart
+            chart.Series.Add(series);
+            series.ArgumentScaleType = ScaleType.Numerical;
+            ((LineSeriesView)series.View).LineStyle.DashStyle = DashStyle.Dash;
+            ((LineSeriesView)series.View).LineMarkerOptions.Kind = MarkerKind.Circle;
+            chart.Legend.Visibility = DevExpress.Utils.DefaultBoolean.False;
+
+            XYDiagram diagram = (XYDiagram)chart.Diagram;
+            diagram.EnableAxisXScrolling = true;
+            diagram.AxisX.Title.Text = "Value";
+            diagram.AxisX.Title.Visibility = DevExpress.Utils.DefaultBoolean.True;
+            diagram.AxisY.Title.Text = "Membership Degree";
+            diagram.AxisY.Title.Visibility = DevExpress.Utils.DefaultBoolean.True;
+
+            chart.Dock = DockStyle.Fill;
+            tabpgFuzzySetChart.Controls.Add(chart);
+        }
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            txtFuzzySetName.Clear();
+            lstFuzzySetResults.Items.Clear();
+            pnlFuzzySetMeaning.Visible = false;
+        }
+
+        // Hàm xử lý khi người dùng chọn một Fuzzy Set trong danh sách kết quả
+        private void lstFuzzySetResults_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lstFuzzySetResults.SelectedItem != null)
+            {
+                selectedFuzzySet = results.FirstOrDefault(r => r.fuzzySetName == lstFuzzySetResults.SelectedItem.ToString());
+                pnlFuzzySetMeaning.Visible = true;
+                if (selectedFuzzySet is DiscreteFuzzySetDTO<int> ||
+                    selectedFuzzySet is DiscreteFuzzySetDTO<float> ||
+                    selectedFuzzySet is DiscreteFuzzySetDTO<string>)
+                {
+                    // Thông tin chi tiết Discrete Fuzzy Set
+                    continuosFuzzySetInfo.Visible = false;
+                    tabpgFuzzySetChart.PageVisible = false;
+                    discreteFuzzySetInfo.Visible = true;
+                    discreteFuzzySetInfo.LoadFuzzySet(selectedFuzzySet);
+                }
+                else
+                {
+                    // Thông tin chi tiết Continuous Fuzzy Set
+                    discreteFuzzySetInfo.Visible = false;
+                    continuosFuzzySetInfo.Visible = true;
+                    tabpgFuzzySetChart.PageVisible = true;
+                    continuosFuzzySetInfo.LoadFuzzySet(selectedFuzzySet);
+                    drawChartContinuousFS(selectedFuzzySet);
+                }
+            }
+        }
+
+        // Hàm xử lý khi nhấn nút "Close" để đóng form
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        // Hàm xử lý khi nhấn nút "Delete" để xóa Fuzzy Set đã chọn
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show($"Are you sure you want to delete fuzzy set '{selectedFuzzySet.fuzzySetName}'?", "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    service.removeFuzzySet(selectedFuzzySet);
+                    XtraMessageBox.Show("Fuzzy set deleted successfully.", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    int index = lstFuzzySetResults.SelectedIndex;
+                    var item = this.results[index];
+                    this.results.RemoveAt(index);
+                    lstFuzzySetResults.Items.RemoveAt(index);
+                    // Refresh the list after deletion
+                    if (lstFuzzySetResults.Items.Count > 0)
+                    {
+                        int nextIndex = (index < lstFuzzySetResults.Items.Count) ? index : lstFuzzySetResults.Items.Count - 1;
+                        lstFuzzySetResults.SelectedIndex = nextIndex;
+                    }
+                    else
+                    {
+                        refreshForm();
+                    }
+                }
+                catch(InvalidOperationException ex)
+                {
+                    HandlingExceptionViaErrorNotification.handlingInvalidOperationException(ex);
+                }
+                catch (UnderlyingStorageEngineCRUDException ex)
+                {
+                    XtraMessageBox.Show($"Error: {ex.Message}", "UNDERLYING STORAGE MECHANISM ERROR", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+
+            }
+        }
+
+        // Hàm xử lý khi nhấn nút "Update" để cập nhật thông tin Fuzzy Set đã chọn
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            DialogResult result = XtraMessageBox.Show($"Are you sure you want to update fuzzy set '{selectedFuzzySet.fuzzySetName}'?", "Confirm Update", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    FuzzySetDTO updatedFuzzySet = null;
+                    if (selectedFuzzySet is ContinuousFuzzySetDTO)
+                    {
+                        updatedFuzzySet = continuosFuzzySetInfo.getContinuousFuzzySet();
+                    }
+                    else
+                    {
+
+                        switch (discreteFuzzySetInfo.getFuzzySetType())
+                        {
+                            case FieldType.DIST_FUZZYSET_INT:
+                                updatedFuzzySet = discreteFuzzySetInfo.getDiscreteFuzzySet<int>();
+                                break;
+                            case FieldType.DIST_FUZZYSET_FLOAT:
+                                updatedFuzzySet = discreteFuzzySetInfo.getDiscreteFuzzySet<float>();
+                                break;
+                            case FieldType.DIST_FUZZYSET_TEXT:
+                                updatedFuzzySet = discreteFuzzySetInfo.getDiscreteFuzzySet<string>();
+                                break;
+                        }
+                    }
+                    service.updateFuzzySet(updatedFuzzySet);
+                    int currentIndex = lstFuzzySetResults.SelectedIndex;
+                    this.results[currentIndex] = updatedFuzzySet;
+                    lstFuzzySetResults.Items[currentIndex] = updatedFuzzySet.fuzzySetName;
+                    selectedFuzzySet = updatedFuzzySet;
+                    if (updatedFuzzySet is ContinuousFuzzySetDTO)
+                    {
+                        drawChartContinuousFS(updatedFuzzySet);
+                    }
+                    XtraMessageBox.Show("Fuzzy set updated successfully.", "Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch(InvalidOperationException ex)
+                {
+                    HandlingExceptionViaErrorNotification.handlingInvalidOperationException(ex);
+                }
+                catch(FormatException ex)
+                {
+                    XtraMessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch(InvalidDataException ex)
+                {
+                    XtraMessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (UnderlyingStorageEngineCRUDException ex)
+                {
+                    XtraMessageBox.Show($"Error: {ex.Message}", "UNDERLYING STORAGE MECHANISM ERROR", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        // Hàm reset lại form
+        private void refreshForm()
+        {
+            pnlFuzzySetMeaning.Visible = false;
+            tabpgFuzzySetChart.Controls.Clear();
+            selectedFuzzySet = null;
+        }
+    }
+}

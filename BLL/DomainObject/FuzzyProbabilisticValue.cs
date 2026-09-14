@@ -1,0 +1,109 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BLL.DomainObject
+{
+    public class FuzzyProbabilisticValue<T>:AbstractFuzzyProbabilisticValue
+    {
+        public FieldType domain;
+        public List<FuzzySet<T>> valueList;
+        public List<float> intervalProbLowerBoundList;
+        public List<float> intervalProbUpperBoundList;
+
+        public FuzzyProbabilisticValue(FieldType domain, List<FuzzySet<T>> valueList, List<float> intervalProbLowerBoundList, List<float> intervalProbUpperBoundList):base()
+        {
+            this.domain = domain;
+            this.valueList = valueList;
+            this.intervalProbLowerBoundList = intervalProbLowerBoundList;
+            this.intervalProbUpperBoundList = intervalProbUpperBoundList;
+        }
+        public override bool isValueSetEmpty()
+        {
+            return this.valueList.Count == 0;
+        }
+        public override bool hasSameValueList(AbstractFuzzyProbabilisticValue v)
+        {
+            if (v is FuzzyProbabilisticValue<T>)
+            {
+                bool isSameKeyValue = true;
+                FuzzyProbabilisticValue<T> T_v = (FuzzyProbabilisticValue<T>)(object)v;
+                isSameKeyValue = this.valueList.Count == T_v.valueList.Count;
+                for(int i=0; i < this.valueList.Count; ++i)
+                {
+                    if (!this.valueList[i].isEqualTo(T_v.valueList[i]))
+                    {
+                        isSameKeyValue = false;
+                        break;
+                    }
+                }
+                return isSameKeyValue;
+                
+            }
+            else
+                return false;
+        }
+        public override string ToString()
+        {
+            string content = "{";
+            for(int i=0; i<this.valueList.Count; ++i)
+            {
+                //if(content is FuzzySet<string>)
+                //    content += $"(\"{this.valueList[i].getName()}\",[{this.intervalProbLowerBoundList[i]},{this.intervalProbUpperBoundList[i]}]),";
+                //else
+                //    content += $"({this.valueList[i].getName()},[{this.intervalProbLowerBoundList[i]},{this.intervalProbUpperBoundList[i]}]),";
+                content += $"({this.valueList[i].getName()},[{this.intervalProbLowerBoundList[i]},{this.intervalProbUpperBoundList[i]}]),";
+
+            }
+            content = content.TrimEnd(',');
+            content += "}";
+
+            return content;
+        }
+        public override bool equals(AbstractFuzzyProbabilisticValue v)
+        {
+            if (v is FuzzyProbabilisticValue<T>)
+            {
+                FuzzyProbabilisticValue<T> v1 = (FuzzyProbabilisticValue<T>)v;
+                if (this.valueList.Count != v1.valueList.Count)
+                    return false;
+                for (int i=0; i<this.valueList.Count; ++i)
+                {
+                    //if (this.valueList[i] != v1.valueList[i]
+                    //    || this.intervalProbLowerBoundList[i] != v1.intervalProbLowerBoundList[i]
+                    //    || this.intervalProbUpperBoundList[i] != v1.intervalProbUpperBoundList[i])
+                    //    return false;
+                    if (!this.valueList[i].Equal(v1.valueList[i])
+                        || this.intervalProbLowerBoundList[i] != v1.intervalProbLowerBoundList[i]
+                        || this.intervalProbUpperBoundList[i] != v1.intervalProbUpperBoundList[i])
+                        return false;
+                }
+                return true;
+            }
+            else
+                return false;
+        }
+
+        //public override bool isPrecise()
+        //{
+        //    foreach( this.valueList)
+        //}
+        //public override bool isExact()
+        //{
+        //    if (this.valueList.Count > 1 || this.intervalProbLowerBoundList[0] != 1 || this.intervalProbUpperBoundList[0] != 1)
+        //        return false;
+        //    else
+        //        return true;
+        //}
+
+        //public FieldType getDomain() => this.domain;
+        //public FuzzySet<T> getVal(int index) => this.valueList[index];
+        //public float getLowerBoundProb(int index) => this.intervalProbLowerBoundList[index];
+        //public float getUpperBoundProb(int index) => this.intervalProbUpperBoundList[index];
+
+
+    }
+}

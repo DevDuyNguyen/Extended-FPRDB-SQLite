@@ -1,0 +1,364 @@
+﻿using BLL.Common;
+using BLL.DomainObject;
+using BLL.DTO;
+using BLL.Interfaces;
+using BLL.Services;
+using BLL.SQLProcessing;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using BLL.Exceptions;
+
+namespace BLL
+{
+    public class Program
+    {
+        static string dbFile = "D:\\test.db";
+        //not done: Moq for mocking
+        static void test_createDiscreteFuzzySet()
+        {
+            
+
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            FuzzySetDAO fuzzySetDAO = compRoot.getFuzzySetDAO();
+
+            dbMgr.loadDB(dbFile);
+            DiscreteFuzzySetDTO<int> fuzzySet = new DiscreteFuzzySetDTO<int>(
+                new List<int>() { 21, 22, 23 },
+                new List<float>() { 0.5f, 1, 0.5f },
+                "about_22",
+                FieldType.INT
+                );
+
+            fuzzySetDAO.createDiscreteFuzzySet<int>(fuzzySet);
+        }
+        static void test_createContinuousFuzzySet()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            FuzzySetDAO fuzzySetDAO = compRoot.getFuzzySetDAO();
+
+            dbMgr.loadDB(dbFile);
+            ContinuousFuzzySetDTO fuzzySet = new ContinuousFuzzySetDTO(10,20,30,40,"random1" );
+
+            fuzzySetDAO.createContinuousFuzzySet(fuzzySet);
+        }
+        static void test_createFuzzySet()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            FuzzySetDAO fuzzySetDAO = compRoot.getFuzzySetDAO();
+            FuzzySetService service = compRoot.getFuzzySetService();
+
+            dbMgr.loadDB(dbFile);
+            DiscreteFuzzySetDTO<int> fuzzySet = new DiscreteFuzzySetDTO<int>(
+                new List<int>() { 22, 23, 24 },
+                new List<float>() { 0.5f, 1, 0.5f },
+                "about_23",
+                FieldType.INT
+                );
+
+            ContinuousFuzzySetDTO fuzzySet1 = new ContinuousFuzzySetDTO(10, 20, 30, 40, "random2");
+            service.createFuzzySet<int>(fuzzySet);
+            service.createFuzzySet<float>(fuzzySet1);
+        }
+        static void test_checkSemanticCreateSchema()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            Preprocessor preprocessor = compRoot.getPreprocessor();
+
+            //positive test
+            FPRDBSchema data1 = new FPRDBSchema("thisschemaneverexist", null, 
+                new List<string>() { "attr1", "attr2", "attr3" }, 
+                "pk_1");
+            Debug.WriteLine($"Expected: true, Actual:{preprocessor.checkSemanticCreateSchema(data1)}");
+
+            //negative test: name already belong to an existed schema
+            FPRDBSchema data2 = new FPRDBSchema("EmployeeSchema", null,
+                new List<string>() { "attr1", "attr2", "attr3" },
+                "pk_1");
+            try
+            {
+                Debug.WriteLine($"Expected: true,");
+                preprocessor.checkSemanticCreateSchema(data2);
+            }
+            catch(SemanticException ex)
+            {
+                Debug.WriteLine($"Actual: exception: {ex.Message}");
+            }
+
+            //negative test: Schema creation must have primary key
+            FPRDBSchema data3 = new FPRDBSchema("thisschemaneverexist", null,
+                new List<string>() { "attr1", "attr2", "attr3" },
+                "");
+            try
+            {
+                Debug.WriteLine($"Expected: true,");
+                preprocessor.checkSemanticCreateSchema(data3);
+            }
+            catch (SemanticException ex)
+            {
+                Debug.WriteLine($"Actual: exception: {ex.Message}");
+            }
+            //negative test: Schema creation must have primary key
+            FPRDBSchema data4 = new FPRDBSchema("thisschemaneverexist", null,
+                new List<string>(),
+                "pk1");
+            try
+            {
+                Debug.WriteLine($"Expected: true,");
+                preprocessor.checkSemanticCreateSchema(data4);
+            }
+            catch (SemanticException ex)
+            {
+                Debug.WriteLine($"Actual: exception: {ex.Message}");
+            }
+            //negative test: Constraint name already exists
+            FPRDBSchema data5 = new FPRDBSchema("thisschemaneverexist", null,
+                new List<string>() { "attr1"},
+                "PK_Products");
+            try
+            {
+                Debug.WriteLine($"Expected: true,");
+                preprocessor.checkSemanticCreateSchema(data5);
+            }
+            catch (SemanticException ex)
+            {
+                Debug.WriteLine($"Actual: exception: {ex.Message}");
+            }
+
+        }
+        static void BasicUpdatePlanner_executeCreateSchema_success()
+        {
+            CompositionRoot root = new CompositionRoot();
+            root.getDBMgr().loadDB(dbFile);
+            UpdatePlanner updatePlanner = root.getUpdatePlanner();
+
+            List<Field> fieldDefs = new List<Field>()
+            {
+                new Field("id", new FieldInfo(FieldType.INT, 0)),
+                new Field("name", new FieldInfo(FieldType.VARCHAR, 50)),
+                new Field("age", new FieldInfo(FieldType.INT, 0)),
+            };
+
+            FPRDBSchema data1 = new FPRDBSchema("schema15", fieldDefs,
+                new List<string>() { "id", "name"},
+                "pk_15");
+            updatePlanner.executeCreateSchema(data1);
+
+        }
+        static void SQLProcessor_executeDataDefinition_createschema_success()
+        {
+
+            CompositionRoot root = new CompositionRoot();
+            root.getDBMgr().loadDB(dbFile);
+            SQLProcessor sqlProcessor = root.getSQLProcessor();
+            string sql = @"CREATE SCHEMA student2 (
+                student_id int, 
+                name varchar(100), 
+                age DIST_FUZZYSET_INT,
+                CONSTRAINT pk_student2 primary key(student_id)
+                )";
+            sqlProcessor.executeDataDefinition(sql);
+        }
+
+        static void Preprocessor_checkSemanticCreateRelation_tests()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            Preprocessor preprocessor = compRoot.getPreprocessor();
+
+            //postive test
+            FPRDBRelation data = new FPRDBRelation("rel1",null, "student2");
+            Debug.WriteLine($"Expected:True, Actual:{preprocessor.checkSemanticCreateRelation(data)}");
+
+            //negative test: relation already exists
+            FPRDBRelation data1 = new FPRDBRelation("student21", null, "student2");
+            try
+            {
+                Debug.Write("Expected:True,");
+                bool ans=preprocessor.checkSemanticCreateRelation(data1);
+                Debug.WriteLine($"Actual:{ans}");
+            }
+            catch(SemanticException ex)
+            {
+                Debug.WriteLine($"Actual:{ex.Message}");
+            }
+
+            //negative test: Schema doesn't exists
+            FPRDBRelation data2 = new FPRDBRelation("thisrelnoteixst", null, "student2111");
+            try
+            {
+                Debug.Write("Expected:True,");
+                bool ans = preprocessor.checkSemanticCreateRelation(data2);
+                Debug.WriteLine($"Actual:{ans}");
+            }
+            catch (SemanticException ex)
+            {
+                Debug.WriteLine($"Actual:{ex.Message}");
+            }
+
+        }
+        static void UpdatePlanner_executeCreateRelation_success()
+        {
+            CompositionRoot root = new CompositionRoot();
+            root.getDBMgr().loadDB(dbFile);
+            UpdatePlanner updatePlanner = root.getUpdatePlanner();
+
+            FPRDBRelation data = new FPRDBRelation("student22", null, "student2");
+            updatePlanner.executeCreateRelation(data);
+
+        }
+        static void SQLProcessor_executeDataDefinition_createrelation_success()
+        {
+            CompositionRoot root = new CompositionRoot();
+            root.getDBMgr().loadDB(dbFile);
+            SQLProcessor processor = root.getSQLProcessor();
+            
+            string sql = "create relation student23 on student2";
+            processor.executeDataDefinition(sql);
+
+        }
+        static void MetadataManager_getRelation_success()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            MetadataManager metaDataMgr = compRoot.getMetaDataManger();
+            FPRDBRelation rel = metaDataMgr.getRelation("student23");
+        }
+        static void MetaDataManager_getFuzzySetType_success()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            MetadataManager metaDataMgr = compRoot.getMetaDataManger();
+            FieldType type = metaDataMgr.getFuzzySetType("fs2");
+        }
+        static void MetaDataManager_getFuzzySetOID_success()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            MetadataManager metaDataMgr = compRoot.getMetaDataManger();
+            int oid = metaDataMgr.getFuzzySetOID("CONT_FUZZYSET1");
+        }
+        static void MetaDataManager_isTupleExist_success()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            MetadataManager metaDataMgr = compRoot.getMetaDataManger();
+            bool ans = metaDataMgr.isTupleExist(
+                new List<string>{"student_id"},
+                new List<string> { "2"},
+                "student23"
+            );
+        }
+        static void Preprocessor_checkSemanticInsert_success()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            Preprocessor preprocessor = compRoot.getPreprocessor();
+
+            FuzzyProbabilisticValueParsingData student_id_data = new FuzzyProbabilisticValueParsingData(
+                new List<Constant>
+                {
+                    new IntConstant(1)
+                },
+                new List<float> { 1},
+                new List<float> { 1 }
+            );
+            FuzzyProbabilisticValueParsingData name_data = new FuzzyProbabilisticValueParsingData(
+                new List<Constant>
+                {
+                    new StringConstant("duy")
+                },
+                new List<float> { 1 },
+                new List<float> { 1 }
+            );
+            FuzzyProbabilisticValueParsingData age_data = new FuzzyProbabilisticValueParsingData(
+                new List<Constant>
+                {
+                    new FuzzySetConstant("fs1"),
+                    new IntConstant(12)
+                },
+                new List<float> { 0.5f, 0.5f },
+                new List<float> { 0.5f, 0.5f }
+            );
+
+            InsertData data = new InsertData(
+                "student23",
+                new List<String> { "student_id","name","age"},
+                new List<FuzzyProbabilisticValueParsingData> { student_id_data, name_data, age_data}
+            );
+            bool ans = preprocessor.checkSemanticInsert(data);
+        }
+        static void UpdatePlanner_executeInsert_success()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            UpdatePlanner planner = compRoot.getUpdatePlanner();
+            
+
+            FuzzyProbabilisticValueParsingData student_id_data = new FuzzyProbabilisticValueParsingData(
+                new List<Constant>
+                {
+                    new IntConstant(3)
+                },
+                new List<float> { 1 },
+                new List<float> { 1 }
+            );
+            FuzzyProbabilisticValueParsingData name_data = new FuzzyProbabilisticValueParsingData(
+                new List<Constant>
+                {
+                    new StringConstant("duy")
+                },
+                new List<float> { 1 },
+                new List<float> { 1 }
+            );
+            FuzzyProbabilisticValueParsingData age_data = new FuzzyProbabilisticValueParsingData(
+                new List<Constant>
+                {
+                    new FuzzySetConstant("fs1"),
+                    new FuzzySetConstant("fs1")
+                },
+                new List<float> { 0.5f, 0.5f },
+                new List<float> { 0.5f, 0.5f }
+            );
+
+            InsertData data = new InsertData(
+                "student23",
+                new List<String> { "student_id", "name", "age" },
+                new List<FuzzyProbabilisticValueParsingData> { student_id_data, name_data, age_data }
+            );
+            planner.executeInsert(data);
+        }
+        static void SQLProcessor_executeUpdate_insert()
+        {
+            CompositionRoot compRoot = new CompositionRoot();
+            DatabaseManager dbMgr = compRoot.getDBMgr();
+            dbMgr.loadDB(dbFile);
+            SQLProcessor processor = compRoot.getSQLProcessor();
+            processor.executeUpdate(@"INSERT INTO student23 (student_id,name,age)
+                VALUES ({(5,[1,1])},{('d2',[1,1]),('d1',[0.1,1])},{(fs1,[0.5, 0.5]),(12.1,[0.5, 0.5])})
+            ");
+        }
+        static void Main()
+        {
+            //CompositionRoot root = new CompositionRoot();
+            //root.getDatabaseService().createDB("C:\\Users\\Phung\\Desktop\\nam4\\KLTN\\TestSqlite\\db1.db");
+            //Preprocessor_checkSemanticInsert_success();
+            //SQLProcessor_executeUpdate_insert();
+        }
+    }
+}
