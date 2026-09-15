@@ -492,10 +492,16 @@ namespace BLL.SQLProcessing
                 //    throw createSQLSyntaxException("Not a insert statement");
                 lexer.eatDelimiter(")");
 
+                lexer.eatDelimiter("[");
+                float lower_tuple_membership_deg = Convert.ToSingle(lexer.eatNumberConstant());
+                lexer.eatDelimiter(",");
+                float upper_tuple_membership_deg = Convert.ToSingle(lexer.eatNumberConstant());
+                lexer.eatDelimiter("]");
+
                 if (!this.lexer.isEndOfToken())
                     throw this.createSQLSyntaxException($"Extraneous input {this.lexer.getCurrentToken().Text}, expecting EOF");
 
-                return new InsertData(relName, fields, insertValues);
+                return new InsertData(relName, fields, insertValues, lower_tuple_membership_deg, upper_tuple_membership_deg);
             }
             catch (MismatchTokenType ex)
             {

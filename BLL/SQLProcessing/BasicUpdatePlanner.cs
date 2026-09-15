@@ -173,13 +173,13 @@ namespace BLL.SQLProcessing
             {
                 insertSQL += fieldName + ",";
             }
-            insertSQL = insertSQL.TrimEnd(',');
+            insertSQL += "lower_membership_degree, upper_membership_degree";
             insertSQL += ") VALUES (";
             for(int i=0; i<fieldList.Count; ++i)
             {
                 insertSQL += "'" + fprobValues[i].ToTextRepresentation() + "'" + ",";
             }
-            insertSQL = insertSQL.TrimEnd(',');
+            insertSQL += $"{data.lower_tuple_membership_deg},{data.upper_tuple_membership_deg}";
             insertSQL += ")";
             this.dbMgr.executeNonQuery(insertSQL);
 
