@@ -272,6 +272,17 @@ namespace BLL.SQLProcessing
 
             }
 
+            //The tuple's membership degree must be a closed interval within [0,1]
+            if (data.lower_tuple_membership_deg < 0 || data.upper_tuple_membership_deg > 1)
+                throw new SemanticException("The tuple's membership degree must be a closed interval within [0,1]");
+
+            /* The membership degree of a tuple in a relation must be different from 0 (i.e., [0,0]). 
+             * Because if there is no possibility of being a member of the relation, 
+             * it is not worth mentioning in the relation
+             * */
+            if (data.lower_tuple_membership_deg == 0 && data.upper_tuple_membership_deg == 0)
+                throw new SemanticException("The membership degree of a tuple in a relation must be different from 0 (i.e., [0,0]). Because if there is no possibility of being a member of the relation, it is not worth mentioning in the relation");
+
             return true;
 
         }

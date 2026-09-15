@@ -298,7 +298,9 @@ namespace BLL
             InsertData data = new InsertData(
                 "student23",
                 new List<String> { "student_id","name","age"},
-                new List<FuzzyProbabilisticValueParsingData> { student_id_data, name_data, age_data}
+                new List<FuzzyProbabilisticValueParsingData> { student_id_data, name_data, age_data},
+                1,
+                1
             );
             bool ans = preprocessor.checkSemanticInsert(data);
         }
@@ -339,7 +341,9 @@ namespace BLL
             InsertData data = new InsertData(
                 "student23",
                 new List<String> { "student_id", "name", "age" },
-                new List<FuzzyProbabilisticValueParsingData> { student_id_data, name_data, age_data }
+                new List<FuzzyProbabilisticValueParsingData> { student_id_data, name_data, age_data },
+                1,
+                1
             );
             planner.executeInsert(data);
         }

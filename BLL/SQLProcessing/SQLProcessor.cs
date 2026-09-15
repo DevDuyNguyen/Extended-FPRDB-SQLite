@@ -98,7 +98,7 @@ namespace BLL.SQLProcessing
                 InsertData idata = (InsertData)data;
                 if (this.preProcessor.checkSemanticInsert(idata) 
                     && this.constraintService.checkIntegrityConstraintInsert(idata) 
-                    && this.constraintService.checkIfInsertTupleViolateReferentialConstraint(idata))
+                    && this.constraintService.checkIfInsertTupleViolateReferentialConstraint(idata)) 
                 {
                         
                     return this.updatePlanner.executeInsert(idata);
