@@ -7,5 +7,6 @@ namespace BLL.Interfaces
         public void setFieldContent<T>(string fldname, FuzzyProbabilisticValue<T> content);
         public void insert();
         public void delete();
+        public void updateTupleMembershipDegree(float lDegree, float uDegree);
     }
 }

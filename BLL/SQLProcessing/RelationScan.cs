@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 namespace BLL.SQLProcessing
@@ -327,5 +328,28 @@ namespace BLL.SQLProcessing
 
         }
 
+
+        public void updateTupleMembershipDegree(float lDegree, float uDegree)
+        {
+            //update stored current tuple's membership degree:
+            string updateSQL = $"UPDATE {this.relationInfo.getRelName()} SET lower_membership_degree={lDegree}, upper_membership_degree={uDegree} WHERE";
+            List<Field> fields = this.relationInfo.getSchema().getFields();
+            int keyIndex = 0;
+            foreach (string key in this.relationInfo.getSchema().primarykey)
+            {
+                for (int i = 0; i < fields.Count; ++i)
+                {
+                    if (fields[i].getFieldName() == key)
+                    {
+                        keyIndex = i;
+                        break;
+                    }
+                }
+                updateSQL += $" {key}='{this.currentTuple[keyIndex].ToString()}' AND";
+            }
+            int trailingANDIndex = updateSQL.LastIndexOf("AND");
+            updateSQL = updateSQL.Substring(0, trailingANDIndex);
+            this.dbMgr.executeNonQuery(updateSQL);
+        }
     }
 }
