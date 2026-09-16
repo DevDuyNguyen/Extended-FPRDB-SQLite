@@ -630,24 +630,15 @@ namespace BLL.SQLProcessing
                 string assignSymbol = lexer.eatOperator();
                 if (assignSymbol != "=")
                     throw createSQLSyntaxException("assign symbol = is expected");
-                if (lexer.matchIdentifier())
+                
+                if (assignedField== "tuple_membership_degree")
                 {
-                    string assigningField = field();
-                    SelectionCondition condition = null;
-                    if (lexer.matchKeyword("WHERE"))
-                    {
-                        lexer.eatKeyword("WHERE");
-                        condition = this.selectionCondition();
-                    }
+                    lexer.eatDelimiter("[");
+                    float lower_membership_degree = Convert.ToSingle(lexer.eatNumberConstant());
+                    lexer.eatDelimiter(",");
+                    float upper_membership_degree = Convert.ToSingle(lexer.eatNumberConstant());
+                    lexer.eatDelimiter("]");
 
-                    if (!this.lexer.isEndOfToken())
-                        throw this.createSQLSyntaxException($"Extraneous input {this.lexer.getCurrentToken().Text}, expecting EOF");
-
-                    return new FieldFieldModifyData(assignedField, relName, assigningField, condition);
-                }
-                else
-                {
-                    FuzzyProbabilisticValueParsingData assigningFProbValue = this.fuzzyProbabilisticValue();
                     SelectionCondition condition = null;
                     if (lexer.matchKeyword("WHERE"))
                     {
@@ -658,7 +649,41 @@ namespace BLL.SQLProcessing
                     if (!this.lexer.isEndOfToken())
                         throw this.createSQLSyntaxException($"Extraneous input {this.lexer.getCurrentToken().Text}, expecting EOF");
 
-                    return new FieldFuzzProbValueModifyData(assigningFProbValue, relName, assignedField, condition);
+                    return new TupleMembershipDegreeModifyData(lower_membership_degree, upper_membership_degree, relName, assignedField, condition);
+
+                }
+                else
+                {
+                    if (lexer.matchIdentifier())
+                    {
+                        string assigningField = field();
+                        SelectionCondition condition = null;
+                        if (lexer.matchKeyword("WHERE"))
+                        {
+                            lexer.eatKeyword("WHERE");
+                            condition = this.selectionCondition();
+                        }
+
+                        if (!this.lexer.isEndOfToken())
+                            throw this.createSQLSyntaxException($"Extraneous input {this.lexer.getCurrentToken().Text}, expecting EOF");
+
+                        return new FieldFieldModifyData(assignedField, relName, assigningField, condition);
+                    }
+                    else
+                    {
+                        FuzzyProbabilisticValueParsingData assigningFProbValue = this.fuzzyProbabilisticValue();
+                        SelectionCondition condition = null;
+                        if (lexer.matchKeyword("WHERE"))
+                        {
+                            lexer.eatKeyword("WHERE");
+                            condition = this.selectionCondition();
+                        }
+                        //check for extraneous token after parsing
+                        if (!this.lexer.isEndOfToken())
+                            throw this.createSQLSyntaxException($"Extraneous input {this.lexer.getCurrentToken().Text}, expecting EOF");
+
+                        return new FieldFuzzProbValueModifyData(assigningFProbValue, relName, assignedField, condition);
+                    }
                 }
             }
             catch (MismatchTokenType ex)

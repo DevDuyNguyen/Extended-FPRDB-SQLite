@@ -80,5 +80,11 @@ namespace BLL.SQLProcessing
             us.delete();
         }
 
+        public void updateTupleMembershipDegree(float lDegree, float uDegree)
+        {
+            UpdateScan us = (UpdateScan)s;
+            us.updateTupleMembershipDegree(lDegree, uDegree);
+        }
+
     }
 }

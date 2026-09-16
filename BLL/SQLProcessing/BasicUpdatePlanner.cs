@@ -283,8 +283,14 @@ namespace BLL.SQLProcessing
             if (data.getSelectionCondition() != null)
                 p = new SelectPlan(p, data.getSelectionCondition());
             UpdateScan us = (UpdateScan)p.open();
-            string fldName = data.getAssignedField();
-            FieldType fieldType = p.getSchema().getFieldByName(fldName).getFieldInfo().getType();
+            
+            string fldName="";
+            FieldType fieldType=0;
+            if(!(data is TupleMembershipDegreeModifyData))
+            {
+                fldName = data.getAssignedField();
+                fieldType = p.getSchema().getFieldByName(fldName).getFieldInfo().getType();
+            }
             
             int count = 0;
             while (us.next())
@@ -292,16 +298,18 @@ namespace BLL.SQLProcessing
                 //not done: refactor by delegate or c# equivalent of pass function as member in js
                 if(data is FieldFieldModifyData)
                 {
+                    string assigningField = data.getAssignValue() as string;
+
                     if (fieldType == FieldType.INT || fieldType == FieldType.DIST_FUZZYSET_INT)
-                        us.setFieldContent<int>(fldName, us.getFieldContent<int>(fldName));
+                        us.setFieldContent<int>(fldName, us.getFieldContent<int>(assigningField));
                     else if (fieldType == FieldType.FLOAT || fieldType == FieldType.DIST_FUZZYSET_FLOAT || fieldType == FieldType.CONT_FUZZYSET)
-                        us.setFieldContent<float>(fldName, us.getFieldContent<float>(fldName));
+                        us.setFieldContent<float>(fldName, us.getFieldContent<float>(assigningField));
                     else if (fieldType == FieldType.CHAR || fieldType == FieldType.VARCHAR || fieldType == FieldType.DIST_FUZZYSET_TEXT)
-                        us.setFieldContent<string>(fldName, us.getFieldContent<string>(fldName));
+                        us.setFieldContent<string>(fldName, us.getFieldContent<string>(assigningField));
                     else //if (fieldType == FieldType.BOOLEAN)
-                        us.setFieldContent<bool>(fldName, us.getFieldContent<bool>(fldName));
+                        us.setFieldContent<bool>(fldName, us.getFieldContent<bool>(assigningField));
                 }
-                else
+                else if (data is FieldFuzzProbValueModifyData)
                 {
                     FuzzyProbabilisticValueParsingData parsed_fprobValue = (FuzzyProbabilisticValueParsingData)data.getAssignValue();
                     if (fieldType == FieldType.INT || fieldType == FieldType.DIST_FUZZYSET_INT)
@@ -325,6 +333,12 @@ namespace BLL.SQLProcessing
                         us.setFieldContent<bool>(fldName, v);
                     }
                 }
+                else //if (data is TupleMembershipDegreeModifyData)
+                {
+                    (float lDeg, float uDeg) = (ValueTuple<float, float>)data.getAssignValue();
+                    us.updateTupleMembershipDegree(lDeg, uDeg);
+                }
+
                 ++count;
             }
             return count;

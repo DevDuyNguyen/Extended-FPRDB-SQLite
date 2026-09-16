@@ -273,7 +273,7 @@ namespace BLL.SQLProcessing
             }
 
             //The tuple's membership degree must be a closed interval within [0,1]
-            if (data.lower_tuple_membership_deg < 0 || data.upper_tuple_membership_deg > 1)
+            if (!(data.lower_tuple_membership_deg >= 0 && data.lower_tuple_membership_deg <= data.upper_tuple_membership_deg && data.upper_tuple_membership_deg <= 1))
                 throw new SemanticException("The tuple's membership degree must be a closed interval within [0,1]");
 
             /* The membership degree of a tuple in a relation must be different from 0 (i.e., [0,0]). 
@@ -339,7 +339,7 @@ namespace BLL.SQLProcessing
                 throw new SemanticException(ex.Message);
             }
             //Mentiond fields exists
-            if (!relation.getSchema().hasField(data.getAssignedField())) {
+            if ( data.getAssignedField() != "tuple_membership_degree"  && !relation.getSchema().hasField(data.getAssignedField())) {
                 throw new SemanticException($"Field {data.getAssignedField()} doesn't exist in relation {relation.getRelName()}");
             }
             if (data is FieldFieldModifyData)
@@ -398,6 +398,23 @@ namespace BLL.SQLProcessing
             if (data.getSelectionCondition() != null)
             {
                 this.checkIfSelectionConditionIsValid(data.getSelectionCondition(), fieldsInSchema);
+            }
+
+            if(data is TupleMembershipDegreeModifyData)
+            {
+                TupleMembershipDegreeModifyData mData = data as TupleMembershipDegreeModifyData;
+                (float lower_membership_degree, float upper_membership_degree) = (ValueTuple<float,float>)data.getAssignValue();
+
+                //The tuple's membership degree must be a closed interval within [0,1]
+                if (!(lower_membership_degree >=0 && lower_membership_degree<=upper_membership_degree && upper_membership_degree <=1))
+                    throw new SemanticException("The tuple's membership degree must be a closed interval within [0,1]");
+
+                /* The membership degree of a tuple in a relation must be different from 0 (i.e., [0,0]). 
+                 * Because if there is no possibility of being a member of the relation, 
+                 * it is not worth mentioning in the relation
+                 * */
+                if (lower_membership_degree == 0 && upper_membership_degree == 0)
+                    throw new SemanticException("The membership degree of a tuple in a relation must be different from 0 (i.e., [0,0]). Because if there is no possibility of being a member of the relation, it is not worth mentioning in the relation");
             }
 
             return true;
@@ -835,7 +852,7 @@ namespace BLL.SQLProcessing
                      * in short, [not done: only for metadata-level, not data level yet]
                      */
                     if (!attributeMustHaveExactAndPreciseValue.Contains(mdata.getAssignValue() as string))
-                        throw new InvalidOperationException($"Violation Attribute {mdata.getAssignedField()}={mdata.getAssignValue() as string}. Currently FPRDB only support update primary key/foreign key attribute a=primary key/foreign key attribute b to ensure the updated value of key attribute must be exact and precise.");
+                        throw new InvalidOperationException($"Violation Attribute {mdata.getAssignedField()}={mdata.getAssignValue() as string}. Currently FPRDB only support update primary key/foreign key attribute base on the value of another primary key/foreign key attribute to ensure the updated value of key attribute must be exact and precise.");
 
                 }
 
