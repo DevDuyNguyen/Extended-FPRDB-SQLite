@@ -131,7 +131,6 @@ namespace BLL.SQLProcessing
                 return this.queryPlanner.createPlan(data);
 
             return null;
-
         }
         public float calculateProbabilisticInterpretationForRelationOnFuzzySetsExpression(string expression)
         {
