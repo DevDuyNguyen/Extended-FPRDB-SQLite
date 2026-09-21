@@ -768,6 +768,8 @@ namespace BLL.SQLProcessing
                             tmpField2 = allFieldsFromMentionedRelations.FirstOrDefault(f => f.getFieldName() == fieldfieldEx.rField);
                             this.checkCompatibleFieldEqualField(tmpField1, tmpField2);
                         }
+
+                        //no need to check on AtomicSelectionExpressionTuppleMembershipDegree
                     }
                 }
 

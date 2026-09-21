@@ -821,17 +821,19 @@ namespace BLL.SQLProcessing
             {
                 if (!lexer.matchDelimiter("("))
                 {
-                    //updated to fit extended FPRDB model
+                    //atomic selection expression for selecting tuples belong to the relation
                     if (lexer.matchKeyword("BELONG_TO_RELATION"))
                     {
                         lexer.eatKeyword("BELONG_TO_RELATION");
+                        return new AtomicSelectionExpressionTuppleMembershipDegree();
 
                     }
 
 
-
+                    
                     string fieldName1 = field();
                     string compareOperator = lexer.eatOperator();
+                    //atimic selection expression for selecting tuples satisfying something like attribute>12
                     if (compareOperator != "=" || !lexer.matchProbabilisticCombinationStrategy())
                     {
                         Constant v;
@@ -860,6 +862,7 @@ namespace BLL.SQLProcessing
                     }
                     else
                     {
+                        //atimic selection expression for selecting tuples satisfying something like attribute1=attribute2
                         string strStrategy = lexer.eatProbabilisticCombinationStrategy();
                         ProbabilisticCombinationStrategy enumStrategy = ProbabilisticCombinationStrategyUtilities.convertStringToEnum(strStrategy);
                         if (!ProbabilisticCombinationStrategyUtilities.isConjunctionStategy(enumStrategy))
@@ -871,6 +874,7 @@ namespace BLL.SQLProcessing
                 }
                 else
                 {
+                    //recursive selection expression
                     lexer.eatDelimiter("(");
                     SelectionExpression res = selectionExpression();
                     lexer.eatDelimiter(")");
