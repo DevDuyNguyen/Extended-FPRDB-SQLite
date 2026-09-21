@@ -16,7 +16,7 @@ namespace BLL.Common
             "dist_fuzzyset_int", "dist_fuzzyset_float", "dist_fuzzyset_text",
             "cont_fuzzyset", "constraint", "primary", "key",
             "relation", "on", "insert", "into", "values", "update", "set", "delete", "drop",
-             "true", "false", "on", "from", "take", "null"
+             "true", "false", "on", "from", "take", "null", "BELONG_TO_RELATION"
         };
     }
 }

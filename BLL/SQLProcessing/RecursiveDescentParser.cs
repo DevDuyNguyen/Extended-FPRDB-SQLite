@@ -821,6 +821,15 @@ namespace BLL.SQLProcessing
             {
                 if (!lexer.matchDelimiter("("))
                 {
+                    //updated to fit extended FPRDB model
+                    if (lexer.matchKeyword("BELONG_TO_RELATION"))
+                    {
+                        lexer.eatKeyword("BELONG_TO_RELATION");
+
+                    }
+
+
+
                     string fieldName1 = field();
                     string compareOperator = lexer.eatOperator();
                     if (compareOperator != "=" || !lexer.matchProbabilisticCombinationStrategy())
