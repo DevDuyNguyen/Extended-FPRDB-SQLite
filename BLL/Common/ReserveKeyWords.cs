@@ -18,5 +18,7 @@ namespace BLL.Common
             "relation", "on", "insert", "into", "values", "update", "set", "delete", "drop",
              "true", "false", "on", "from", "take", "null", "BELONG_TO_RELATION"
         };
+        public static readonly string relation_lower_membership_degree = "TupleMinProb";
+        public static readonly string relation_upper_membership_degree = "TupleMaxProb";
     }
 }

@@ -16,5 +16,7 @@ namespace BLL.Interfaces
         public bool hasField(string fldname);
         //public FPRDBSchema getSchema();
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple();
+
+        public (float,float) getCurrentTupleMembershipDegree();
     }
 }

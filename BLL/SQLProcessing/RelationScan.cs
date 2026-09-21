@@ -17,6 +17,8 @@ namespace BLL.SQLProcessing
         private FPRDBRelation relationInfo;
         private int currentTupleIndex;//index start at 1
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
+
+        private (float, float) currentTupleLowerMembershipDegree;
         private DatabaseManager dbMgr;
         private MetadataManager metaDataMgr;
         private RecursiveDescentParser parser;
@@ -76,7 +78,7 @@ namespace BLL.SQLProcessing
             {
                 if (reader.Read())
                 {
-                    //List<FuzzyProbabilisticValue<object>> tmp = new List<FuzzyProbabilisticValue<object>>();
+                    //extract fuzzy probabilistic value of each attributes in the FPRDB relation
                     List<AbstractFuzzyProbabilisticValue> tmp = new List<AbstractFuzzyProbabilisticValue>();
                     List<Field> fields = this.relationInfo.getSchema().getFields();
                     string content;
@@ -109,6 +111,20 @@ namespace BLL.SQLProcessing
                         }
                         
                     }
+
+                    //extract tupple's membership degree
+                    float lDegree, uDegree;
+                    if (!float.TryParse((string)reader[ReserveKeyWords.relation_lower_membership_degree], out lDegree))
+                    {
+                        throw new InvalidOperationException("Can't extract tuple membership degree");
+                    }
+                    if (!float.TryParse((string)reader[ReserveKeyWords.relation_upper_membership_degree], out uDegree))
+                    {
+                        throw new InvalidOperationException("Can't extract tuple membership degree");
+                    }
+                    this.currentTupleLowerMembershipDegree = (lDegree, uDegree);
+                    
+
                     this.currentTuple = tmp;
                     this.currentTupleIndex++;
                     return true;
@@ -351,5 +367,12 @@ namespace BLL.SQLProcessing
             updateSQL = updateSQL.Substring(0, trailingANDIndex);
             this.dbMgr.executeNonQuery(updateSQL);
         }
+
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.currentTupleLowerMembershipDegree;
+        }
+
     }
+
 }
