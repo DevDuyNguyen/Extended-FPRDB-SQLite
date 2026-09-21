@@ -652,7 +652,7 @@ namespace BLL.SQLProcessing
                     }
 
                     //Every relation mentioned in a FROM-clause must be a relation in the current database.
-                    foreach (string relName in data1.relationList)
+                    foreach (string relName in data1.cartesianProductList.getRelationList())
                     {
                         if (!this.metadataMgr.isRelationExist(relName))
                             throw new SemanticException($"Relation {relName} doesn't exist");
@@ -661,7 +661,7 @@ namespace BLL.SQLProcessing
                     //Check Cartesian Product compatibility 
                     checkCartesianProductCompatibility(relations.Select(rel => rel.getSchema()).ToList(), out atomicQuerySchema);
 
-                    //create schema for BaseCartesianProductQueryData for later set opeartion semantic check
+                    //create schema for BaseCartesianProductQueryData for later set operation semantic check
                     List<Field> tmpField;
                     if (data1.selectList.Count == 1 && data1.selectList[0].field == "*")
                         tmpField = atomicQuerySchema.getFields();
@@ -937,7 +937,8 @@ namespace BLL.SQLProcessing
                 throw new SemanticException($"the numbers after keyword 'from' and 'take' must be non-negative integer");
             
             AtomicSelectionCondition condition = new AtomicSelectionCondition(data.selectionExpression, 0, 1);
-            QueryData queryData = new BaseCartesianProductQueryData(new List<SelectField> { new SelectField("", "*") }, new List<string> { data.relation }, condition);
+            //QueryData queryData = new BaseCartesianProductQueryData(new List<SelectField> { new SelectField("", "*") }, new List<string> { data.relation }, condition);
+            QueryData queryData = new BaseCartesianProductQueryData(new List<SelectField> { new SelectField("", "*") }, new CartesianProductList(new List<string> { data.relation}, null), condition);
             checkSemanticQuery(queryData);
 
             return true;

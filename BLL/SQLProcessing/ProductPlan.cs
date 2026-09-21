@@ -1,4 +1,5 @@
 ﻿using BLL.DomainObject;
+using BLL.Enums;
 using BLL.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -12,16 +13,19 @@ namespace BLL.SQLProcessing
     {
         private Plan p1;
         private Plan p2;
+
+        private ProbabilisticCombinationStrategy probCombinationStrategy;
         private MetadataManager metaDataMgr;
         private DatabaseManager dbMgr;
         private FPRDBSchema schema;
 
-        public ProductPlan(Plan p1, Plan p2, MetadataManager metaDataMgr, DatabaseManager dbMgr)
+        public ProductPlan(Plan p1, Plan p2, MetadataManager metaDataMgr, DatabaseManager dbMgr, ProbabilisticCombinationStrategy probCombinationStrategy)
         {
             this.p1 = p1;
             this.p2 = p2;
             this.metaDataMgr = metaDataMgr;
             this.dbMgr = dbMgr;
+            this.probCombinationStrategy = probCombinationStrategy;
             this.schema = new FPRDBSchema("", new List<Field>(), null);
 
             this.schema.addFieldsFromSchema(this.p1.getSchema());
@@ -30,7 +34,7 @@ namespace BLL.SQLProcessing
 
         public Scan open()
         {
-            return new ProductScan(this.p1.open(), this.p2.open(), this.schema);
+            return new ProductScan(this.p1.open(), this.p2.open(), this.schema, this.probCombinationStrategy);
         }
         public FPRDBSchema getSchema() => this.schema;
     }

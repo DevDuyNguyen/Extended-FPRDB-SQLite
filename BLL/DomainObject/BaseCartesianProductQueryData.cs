@@ -9,14 +9,14 @@ namespace BLL.DomainObject
     public class BaseCartesianProductQueryData:QueryData
     {
         public List<SelectField> selectList;
-        public List<string> relationList;
+        public CartesianProductList cartesianProductList;
         public SelectionCondition selectionCondition;
         public FPRDBSchema schema;
 
-        public BaseCartesianProductQueryData(List<SelectField> selectList, List<string> relationList, SelectionCondition selectionCondition)
+        public BaseCartesianProductQueryData(List<SelectField> selectList, CartesianProductList cartesianProductList, SelectionCondition selectionCondition)
         {
             this.selectList = selectList;
-            this.relationList = relationList;
+            this.cartesianProductList = cartesianProductList;
             this.selectionCondition = selectionCondition;
         }
         public override FPRDBSchema getSchema() => this.schema;

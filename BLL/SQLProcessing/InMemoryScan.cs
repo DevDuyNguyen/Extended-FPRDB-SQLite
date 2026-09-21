@@ -14,7 +14,9 @@ namespace BLL.SQLProcessing
         private FPRDBSchema schema;
         private int currentTupleIndex=-1;//index start at 0
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
+        private (float, float) currentTupleLowerMembershipDegree;
         private List<List<AbstractFuzzyProbabilisticValue>> tuples;
+        private List<(float, float)> tupleMembershipDegree;
 
         public InMemoryScan(Plan p)
         {
@@ -25,6 +27,7 @@ namespace BLL.SQLProcessing
             while (s.next())
             {
                 this.tuples.Add(s.getCurrentTuple());
+                this.tupleMembershipDegree.Add(s.getCurrentTupleMembershipDegree());
             }
         }
 
@@ -60,16 +63,19 @@ namespace BLL.SQLProcessing
             {
                 this.currentTupleIndex++;
                 this.currentTuple = this.tuples[this.currentTupleIndex];
+                this.currentTupleLowerMembershipDegree = this.tupleMembershipDegree[this.currentTupleIndex];
                 return true;
             }
             else
             {
                 this.currentTuple = null;
+                this.currentTupleLowerMembershipDegree = (0, 0);
                 return false;
             }
         }
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
         public void close() => throw new NotImplementedException();
+        public (float, float) getCurrentTupleMembershipDegree()=> this.
 
     }
 }

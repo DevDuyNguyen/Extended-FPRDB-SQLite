@@ -55,7 +55,8 @@ namespace BLL.SQLProcessing
         {
             //create relation plans for each mentioned relations
             List<RelationPlan> relPlans = new List<RelationPlan>();
-            foreach(string relName in data.relationList)
+            
+            foreach(string relName in data.cartesianProductList.relationList)
             {
                 relPlans.Add(new RelationPlan(relName, this.metaDataMgr, this.dbMgr, this.parser, this.constraintService));
             }
@@ -63,7 +64,7 @@ namespace BLL.SQLProcessing
             Plan plan = relPlans[0];
             for(int i=1; i<relPlans.Count; ++i)
             {
-                plan = new ProductPlan(plan, relPlans[i], this.metaDataMgr, this.dbMgr);
+                plan = new ProductPlan(plan, relPlans[i], this.metaDataMgr, this.dbMgr, data.cartesianProductList.probCombinationStrategyList[i]);
             }
             //create selection plan
             if(data.selectionCondition!=null)
