@@ -78,5 +78,9 @@ namespace BLL.SQLProcessing
             return false;
         }
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.s.getCurrentTupleMembershipDegree();
+        }
     }
 }

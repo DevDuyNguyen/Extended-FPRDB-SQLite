@@ -15,6 +15,7 @@ namespace BLL.SQLProcessing
         private Scan s2;
         private FPRDBSchema schema;
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
+        private (float, float) currentTupleLowerMembershipDegree;
         public ProductScan(Scan s1, Scan s2, FPRDBSchema schema)
         {
             this.s1 = s1;
@@ -57,10 +58,13 @@ namespace BLL.SQLProcessing
                 {
                     this.currentTuple.Add(v);
                 }
+                //calculate the current tuple's membership degree
+
             }
             else
             {
                 this.currentTuple = null;
+                this.currentTupleLowerMembershipDegree = (0, 9);
             }
             return hasNext;
         }
@@ -89,5 +93,9 @@ namespace BLL.SQLProcessing
         //public FPRDBSchema getSchema();
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
 
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.currentTupleLowerMembershipDegree;
+        }
     }
 }

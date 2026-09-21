@@ -130,7 +130,11 @@ namespace BLL.SQLProcessing
                     return true;
                 }
                 else
+                {
+                    this.currentTuple = null;
+                    this.currentTupleLowerMembershipDegree = (0, 0);
                     return false;
+                }
             }
         }
         public void close() { }

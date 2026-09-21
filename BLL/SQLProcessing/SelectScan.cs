@@ -35,6 +35,7 @@ namespace BLL.SQLProcessing
                 }
             }
             this.currentTuple = null;
+      
             return false;
         }
         public void close() { }
@@ -84,6 +85,11 @@ namespace BLL.SQLProcessing
         {
             UpdateScan us = (UpdateScan)s;
             us.updateTupleMembershipDegree(lDegree, uDegree);
+        }
+
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.s.getCurrentTupleMembershipDegree();
         }
 
     }
