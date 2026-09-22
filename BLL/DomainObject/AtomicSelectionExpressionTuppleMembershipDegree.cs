@@ -11,7 +11,10 @@ namespace BLL.DomainObject
     {
 
         public override List<SelectionExpression> getAtomicSelectionExpression() => new List<SelectionExpression> { this };
-        public override List<float> calculateProbabilisticInterpretation(Scan currentTuple, FPRDBSchema schema) => throw new NotImplementedException();
+        public override List<float> calculateProbabilisticInterpretation(Scan currentTuple, FPRDBSchema schema)
+        {
+            return new List<float> { currentTuple.getCurrentTupleMembershipDegree().Item1, currentTuple.getCurrentTupleMembershipDegree().Item2 };
+        }
         public override List<string> getMentionedAttributes() => new List<string> { };
 
     }

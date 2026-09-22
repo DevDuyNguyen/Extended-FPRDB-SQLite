@@ -114,15 +114,11 @@ namespace BLL.SQLProcessing
 
                     //extract tupple's membership degree
                     float lDegree, uDegree;
-                    if (!float.TryParse((string)reader[ReserveKeyWords.relation_lower_membership_degree], out lDegree))
-                    {
-                        throw new InvalidOperationException("Can't extract tuple membership degree");
-                    }
-                    if (!float.TryParse((string)reader[ReserveKeyWords.relation_upper_membership_degree], out uDegree))
-                    {
-                        throw new InvalidOperationException("Can't extract tuple membership degree");
-                    }
-                    this.currentTupleLowerMembershipDegree = (lDegree, uDegree);
+                    
+                    this.currentTupleLowerMembershipDegree = (
+                        Convert.ToSingle(reader[ReserveKeyWords.relation_lower_membership_degree]),
+                        Convert.ToSingle(reader[ReserveKeyWords.relation_upper_membership_degree])
+                        );
                     
 
                     this.currentTuple = tmp;
@@ -352,7 +348,7 @@ namespace BLL.SQLProcessing
         public void updateTupleMembershipDegree(float lDegree, float uDegree)
         {
             //update stored current tuple's membership degree:
-            string updateSQL = $"UPDATE {this.relationInfo.getRelName()} SET lower_membership_degree={lDegree}, upper_membership_degree={uDegree} WHERE";
+            string updateSQL = $"UPDATE {this.relationInfo.getRelName()} SET {ReserveKeyWords.relation_lower_membership_degree}={lDegree}, {ReserveKeyWords.relation_upper_membership_degree}={uDegree} WHERE";
             List<Field> fields = this.relationInfo.getSchema().getFields();
             int keyIndex = 0;
             foreach (string key in this.relationInfo.getSchema().primarykey)

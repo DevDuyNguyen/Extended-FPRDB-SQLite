@@ -85,38 +85,44 @@ public AtomicSelectionExpressionFieldField(string lField, string rField, Probabi
         {
             FieldType left_fieldType = schema.getFieldByName(lField).getFieldInfo().getType();
             FieldType right_fieldType = schema.getFieldByName(rField).getFieldInfo().getType();
+            List<float> ans = new List<float>(2);
 
             if (left_fieldType == right_fieldType)
             {
                 if (left_fieldType == FieldType.INT || left_fieldType == FieldType.DIST_FUZZYSET_INT)
                 {
-                    return genericCalculateProbabilisticInterpretation<int>(currentTuple.getFieldContent<int>(lField), currentTuple.getFieldContent<int>(rField));
+                    ans = genericCalculateProbabilisticInterpretation<int>(currentTuple.getFieldContent<int>(lField), currentTuple.getFieldContent<int>(rField));
                 }
                 else if (left_fieldType == FieldType.FLOAT || left_fieldType == FieldType.DIST_FUZZYSET_FLOAT || left_fieldType == FieldType.CONT_FUZZYSET)
                 {
-                    return genericCalculateProbabilisticInterpretation<float>(currentTuple.getFieldContent<float>(lField), currentTuple.getFieldContent<float>(rField));
+                    ans = genericCalculateProbabilisticInterpretation<float>(currentTuple.getFieldContent<float>(lField), currentTuple.getFieldContent<float>(rField));
                 }
                 else if (left_fieldType == FieldType.CHAR || left_fieldType == FieldType.VARCHAR || left_fieldType == FieldType.DIST_FUZZYSET_TEXT)
                 {
-                    return genericCalculateProbabilisticInterpretation<string>(currentTuple.getFieldContent<string>(lField), currentTuple.getFieldContent<string>(rField));
+                    ans = genericCalculateProbabilisticInterpretation<string>(currentTuple.getFieldContent<string>(lField), currentTuple.getFieldContent<string>(rField));
                 }
                 else //if (fieldType == FieldType.BOOLEAN)
                 {
-                    return genericCalculateProbabilisticInterpretation<bool>(currentTuple.getFieldContent<bool>(lField), currentTuple.getFieldContent<bool>(rField));
+                    ans = genericCalculateProbabilisticInterpretation<bool>(currentTuple.getFieldContent<bool>(lField), currentTuple.getFieldContent<bool>(rField));
                 }
+                
             }
             else
             {
                 Type leftDefiningDomain = FieldTypeUtilities.getDomainType(left_fieldType);
                 Type rightDefiningDomain = FieldTypeUtilities.getDomainType(right_fieldType);
                 if (leftDefiningDomain == typeof(int) && rightDefiningDomain == typeof(float))
-                    return genericCalculateProbabilisticInterpretation<int, float>(currentTuple.getFieldContent<int>(lField), currentTuple.getFieldContent<float>(rField));
+                    ans = genericCalculateProbabilisticInterpretation<int, float>(currentTuple.getFieldContent<int>(lField), currentTuple.getFieldContent<float>(rField));
                 else if (leftDefiningDomain == typeof(float) && rightDefiningDomain == typeof(int))
-                    return genericCalculateProbabilisticInterpretation<float, int>(currentTuple.getFieldContent<float>(lField), currentTuple.getFieldContent<int>(rField));
+                    ans = genericCalculateProbabilisticInterpretation<float, int>(currentTuple.getFieldContent<float>(lField), currentTuple.getFieldContent<int>(rField));
                 else
                     throw new InvalidOperationException($"Unable to perform probabilistic interpretation of selection expression on incompatible field types {leftDefiningDomain.Name}, {rightDefiningDomain.Name}");
             }
-            
+
+            ans[0] *= currentTuple.getCurrentTupleMembershipDegree().Item1;
+            ans[1] *= currentTuple.getCurrentTupleMembershipDegree().Item2;
+            return ans;
+
         }
         public override List<SelectionExpression> getAtomicSelectionExpression()
         {

@@ -23,6 +23,7 @@ namespace BLL.SQLProcessing
             Scan s = p.open();
             this.schema = p.getSchema();
             this.tuples = new List<List<AbstractFuzzyProbabilisticValue>>();
+            this.tupleMembershipDegree= new List<(float, float)>();
 
             while (s.next())
             {
@@ -75,7 +76,7 @@ namespace BLL.SQLProcessing
         }
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
         public void close() => throw new NotImplementedException();
-        public (float, float) getCurrentTupleMembershipDegree()=> this.
+        public (float, float) getCurrentTupleMembershipDegree() => this.currentTupleLowerMembershipDegree;
 
     }
 }

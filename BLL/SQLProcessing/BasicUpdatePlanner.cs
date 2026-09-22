@@ -150,7 +150,7 @@ namespace BLL.SQLProcessing
                 createTableForRelationSQL += fieldDef;
             }
             //add fields lower_membership_degree, upper_membership_degree to represent tuple's membership dgree
-            createTableForRelationSQL += "lower_membership_degree real, upper_membership_degree real";
+            createTableForRelationSQL += $"{ReserveKeyWords.relation_lower_membership_degree} real, {ReserveKeyWords.relation_upper_membership_degree} real";
             createTableForRelationSQL += ")";
 
             this.dbMgr.executeNonQuery(createTableForRelationSQL);
@@ -173,7 +173,7 @@ namespace BLL.SQLProcessing
             {
                 insertSQL += fieldName + ",";
             }
-            insertSQL += "lower_membership_degree, upper_membership_degree";
+            insertSQL += $"{ReserveKeyWords.relation_lower_membership_degree}, {ReserveKeyWords.relation_upper_membership_degree}";
             insertSQL += ") VALUES (";
             for(int i=0; i<fieldList.Count; ++i)
             {
