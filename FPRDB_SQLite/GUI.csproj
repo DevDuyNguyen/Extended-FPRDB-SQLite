@@ -29,4 +29,8 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="GUI\Common\" />
+  </ItemGroup>
+
 </Project>

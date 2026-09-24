@@ -416,6 +416,9 @@ namespace FPRDB_SQLite.GUI
                     row[fieldName] = fprobValue.ToString();
                 }
             }
+            //extract the tuple's membership degree
+            row[Names.lowerTupleMembershipDegree] = s.getCurrentTupleMembershipDegree().Item1;
+            row[Names.upperTupleMembershipDegree] = s.getCurrentTupleMembershipDegree().Item2;
             return row;
         }
         // Method to reload the tabs of schema and relation after modifying
@@ -471,13 +474,17 @@ namespace FPRDB_SQLite.GUI
             List<Field> schemaFields = schema.fields;
             // Sử dụng DataTable để hiện thị thông tin Relation
             DataTable relationContent = new DataTable();
+            string tmpFieldName;
 
             foreach (var field in schemaFields)
             {
-                string fieldName = field.getFieldName();
-                DataColumn dataCol = new DataColumn(fieldName, typeof(string));
+                tmpFieldName = field.getFieldName();
+                DataColumn dataCol = new DataColumn(tmpFieldName, typeof(string));
                 relationContent.Columns.Add(dataCol);
             }
+            //Represent the tuple membership degree of each tuple in the relation
+            relationContent.Columns.Add(new DataColumn(Names.lowerTupleMembershipDegree, typeof(float)));
+            relationContent.Columns.Add(new DataColumn(Names.upperTupleMembershipDegree, typeof(float)));
 
             //fake data
             //Dictionary<string, string> row1 = new Dictionary<string, string>
