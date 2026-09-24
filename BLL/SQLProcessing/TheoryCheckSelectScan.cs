@@ -71,6 +71,9 @@ namespace BLL.SQLProcessing
         }
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
         public (float, float) getCurrentTupleProbabilisticInterpretationForSelectionExpression() => (this.currentTupleLowerProb, this.currentTupleUpperProb);
-
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.s.getCurrentTupleMembershipDegree();
+        }
     }
 }

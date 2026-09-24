@@ -783,6 +783,7 @@ namespace BLL.SQLProcessing
             {
                 List<string> relNames = new List<string>();
                 List<ProbabilisticCombinationStrategy> combinationStrategies = new List<ProbabilisticCombinationStrategy>();
+                ProbabilisticCombinationStrategy combinationStrategy;
                 relNames.Add(relation());
 
                 if (lexer.matchKeyword("NATURAL"))
@@ -791,7 +792,7 @@ namespace BLL.SQLProcessing
                     {
                         lexer.eatKeyword("NATURAL");
                         lexer.eatKeyword("JOIN");
-                        var combinationStrategy = ProbabilisticCombinationStrategyUtilities.convertStringToEnum(lexer.eatProbabilisticCombinationStrategy());
+                        combinationStrategy = ProbabilisticCombinationStrategyUtilities.convertStringToEnum(lexer.eatProbabilisticCombinationStrategy());
                         if (!ProbabilisticCombinationStrategyUtilities.isConjunctionStategy(combinationStrategy))
                             throw createSQLSyntaxException("NATUAL JOIN can only be paired with probabilistic conjunction strategy");
                         combinationStrategies.Add(combinationStrategy);
@@ -804,9 +805,13 @@ namespace BLL.SQLProcessing
                     while (lexer.matchDelimiter(","))
                     {
                         lexer.eatDelimiter(",");
+                        combinationStrategy = ProbabilisticCombinationStrategyUtilities.convertStringToEnum(lexer.eatProbabilisticCombinationStrategy());
+                        if (!ProbabilisticCombinationStrategyUtilities.isConjunctionStategy(combinationStrategy))
+                            throw createSQLSyntaxException("CARTESIAN PRODUCT can only be paired with probabilistic conjunction strategy");
+                        combinationStrategies.Add(combinationStrategy);
                         relNames.Add(relation());
                     }
-                    return relNames;
+                    return new CartesianProductList(relNames, combinationStrategies);
                 }
             }
             catch (MismatchTokenType ex)
@@ -1090,8 +1095,8 @@ namespace BLL.SQLProcessing
                         lexer.eatKeyword("WHERE");
                         selectionCondt = selectionCondition();
                     }
-                    if (from_list is List<string>)
-                        return new BaseCartesianProductQueryData(selectFields, (List<string>)from_list, selectionCondt);
+                    if (from_list is CartesianProductList)
+                        return new BaseCartesianProductQueryData(selectFields, (CartesianProductList)from_list, selectionCondt);
                     else
                         return new BaseNaturalJoinQueryData(selectFields, (NaturalJoinList)from_list, selectionCondt);
 

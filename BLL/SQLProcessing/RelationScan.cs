@@ -17,6 +17,8 @@ namespace BLL.SQLProcessing
         private FPRDBRelation relationInfo;
         private int currentTupleIndex;//index start at 1
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
+
+        private (float, float) currentTupleLowerMembershipDegree;
         private DatabaseManager dbMgr;
         private MetadataManager metaDataMgr;
         private RecursiveDescentParser parser;
@@ -76,7 +78,7 @@ namespace BLL.SQLProcessing
             {
                 if (reader.Read())
                 {
-                    //List<FuzzyProbabilisticValue<object>> tmp = new List<FuzzyProbabilisticValue<object>>();
+                    //extract fuzzy probabilistic value of each attributes in the FPRDB relation
                     List<AbstractFuzzyProbabilisticValue> tmp = new List<AbstractFuzzyProbabilisticValue>();
                     List<Field> fields = this.relationInfo.getSchema().getFields();
                     string content;
@@ -109,12 +111,26 @@ namespace BLL.SQLProcessing
                         }
                         
                     }
+
+                    //extract tupple's membership degree
+                    float lDegree, uDegree;
+                    
+                    this.currentTupleLowerMembershipDegree = (
+                        Convert.ToSingle(reader[ReserveKeyWords.relation_lower_membership_degree]),
+                        Convert.ToSingle(reader[ReserveKeyWords.relation_upper_membership_degree])
+                        );
+                    
+
                     this.currentTuple = tmp;
                     this.currentTupleIndex++;
                     return true;
                 }
                 else
+                {
+                    this.currentTuple = null;
+                    this.currentTupleLowerMembershipDegree = (0, 0);
                     return false;
+                }
             }
         }
         public void close() { }
@@ -332,7 +348,7 @@ namespace BLL.SQLProcessing
         public void updateTupleMembershipDegree(float lDegree, float uDegree)
         {
             //update stored current tuple's membership degree:
-            string updateSQL = $"UPDATE {this.relationInfo.getRelName()} SET lower_membership_degree={lDegree}, upper_membership_degree={uDegree} WHERE";
+            string updateSQL = $"UPDATE {this.relationInfo.getRelName()} SET {ReserveKeyWords.relation_lower_membership_degree}={lDegree}, {ReserveKeyWords.relation_upper_membership_degree}={uDegree} WHERE";
             List<Field> fields = this.relationInfo.getSchema().getFields();
             int keyIndex = 0;
             foreach (string key in this.relationInfo.getSchema().primarykey)
@@ -351,5 +367,12 @@ namespace BLL.SQLProcessing
             updateSQL = updateSQL.Substring(0, trailingANDIndex);
             this.dbMgr.executeNonQuery(updateSQL);
         }
+
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.currentTupleLowerMembershipDegree;
+        }
+
     }
+
 }

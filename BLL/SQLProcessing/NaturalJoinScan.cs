@@ -14,6 +14,7 @@ namespace BLL.SQLProcessing
         private Scan s1,s2;
         private List<string> commonFields;
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
+        private (float, float) currentTupleLowerMembershipDegree;
         private FPRDBSchema schema;
         private ProbabilisticCombinationStrategy probCombinationStrategy;
         public NaturalJoinScan(Scan s1, Scan s2, List<string> commonFields, FPRDBSchema schema, ProbabilisticCombinationStrategy probCombinationStrategy)
@@ -64,10 +65,21 @@ namespace BLL.SQLProcessing
                 if(!isValueSetEmpty)
                 {
                     this.currentTuple = ans;
+
+                    //calculate the joined tuple's memberhsip degree
+                    (float, float) t1i_membership_degree = s1.getCurrentTupleMembershipDegree();
+                    (float, float) t2j_membership_degree = s2.getCurrentTupleMembershipDegree();
+                    List<float> tmp= ProbabilisticCombinationStrategyUtilities.combine(t1i_membership_degree.Item1, t1i_membership_degree.Item2,
+                        t2j_membership_degree.Item1, t2j_membership_degree.Item2, this.probCombinationStrategy);
+                    this.currentTupleLowerMembershipDegree.Item1 = tmp[0];
+                    this.currentTupleLowerMembershipDegree.Item2 = tmp[1];
+
+
                     return true;
                 }
             }
             this.currentTuple = null;
+            this.currentTupleLowerMembershipDegree = (0, 0);
             return false;
             
         }
@@ -166,6 +178,11 @@ namespace BLL.SQLProcessing
 
             }
             return ans;
+        }
+
+        public (float,float) getCurrentTupleMembershipDegree()
+        {
+            return this.currentTupleLowerMembershipDegree;
         }
 
     }

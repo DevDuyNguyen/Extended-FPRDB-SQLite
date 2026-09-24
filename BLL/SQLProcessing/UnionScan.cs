@@ -14,6 +14,7 @@ namespace BLL.SQLProcessing
         private Scan s1;
         private Scan s2;
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
+        private (float, float) currentTupleLowerMembershipDegree;
         private ProbabilisticCombinationStrategy probCombinationStrategy;
         private FPRDBSchema schema;
         private bool isReverse = false;
@@ -81,7 +82,6 @@ namespace BLL.SQLProcessing
 
             while (!this.isReverse && s1.next())
             {
-                //isMatched = false;
                 while (s2.next())
                 {
                     isSameKeyValue = true;
@@ -120,19 +120,28 @@ namespace BLL.SQLProcessing
                     {
                         //union on t1 and t2 to produce the next tuple for the intersection
                         this.currentTuple = this.unionOnTuples();
+
+                        //calculate the unioned tuple's membership degree
+                        (float, float) t1i_membership_degree = s1.getCurrentTupleMembershipDegree();
+                        (float, float) t2j_membership_degree = s2.getCurrentTupleMembershipDegree();
+                        List<float> tmp = ProbabilisticCombinationStrategyUtilities.combine(t1i_membership_degree.Item1, t1i_membership_degree.Item2,
+                            t2j_membership_degree.Item1, t2j_membership_degree.Item2, this.probCombinationStrategy);
+                        this.currentTupleLowerMembershipDegree.Item1 = tmp[0];
+                        this.currentTupleLowerMembershipDegree.Item2 = tmp[1];
+
                         isMatched = true;
                         return true;
 
                     }
                 }
+                //only relation r1 has t1, there is no t1 in r2
                 s2.beforeFirst();
-                this.currentTuple = s1.getCurrentTuple();
+                this.currentTuple = this.s1.getCurrentTuple();
+
+                //extract t1's membership degree into the current tuple's membership degree
+                this.currentTupleLowerMembershipDegree = this.s1.getCurrentTupleMembershipDegree();
+
                 return true;
-                //if(!isMatched)
-                //{
-                //    this.currentTuple = s1.getCurrentTuple();
-                //    return true;
-                //}
             }
 
             
@@ -142,9 +151,6 @@ namespace BLL.SQLProcessing
                 this.s2.beforeFirst();
                 this.isReverse = true;
             }
-            //var tmp = this.s1;
-            //this.s1 = this.s2;
-            //this.s2 = tmp;
 
             while (this.isReverse && s2.next())
             {
@@ -190,13 +196,19 @@ namespace BLL.SQLProcessing
                     }
                 }
                 s1.beforeFirst();
+                
+                //only r2 has t2, there is no t2 in r2
                 if (!isMatched)
                 {
                     this.currentTuple = s2.getCurrentTuple();
+
+                    //extract t2's membership degree into current tuple's membership degree
+                    this.currentTupleLowerMembershipDegree = this.s2.getCurrentTupleMembershipDegree();
                     return true;
                 }
             }
             this.currentTuple = null;
+            this.currentTupleLowerMembershipDegree = (0, 0);
             return false;
 
         }
@@ -288,5 +300,10 @@ namespace BLL.SQLProcessing
         }
         //public FPRDBSchema getSchema();
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.currentTupleLowerMembershipDegree;
+        }
+
     }
 }

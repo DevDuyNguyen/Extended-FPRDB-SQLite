@@ -14,6 +14,7 @@ namespace BLL.SQLProcessing
         private Scan s1;
         private Scan s2;
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
+        private (float, float) currentTupleLowerMembershipDegree;
         private ProbabilisticCombinationStrategy probCombinationStrategy;
         private FPRDBSchema schema;
         //private bool isReverse = false;
@@ -102,6 +103,14 @@ namespace BLL.SQLProcessing
                         if (!isValueSetEmpty)
                         {
                             this.currentTuple = ans;
+                            //calculated the intersected tuple's membership degree
+                            (float, float) t1i_membership_degree = s1.getCurrentTupleMembershipDegree();
+                            (float, float) t2j_membership_degree = s2.getCurrentTupleMembershipDegree();
+                            List<float> tmp = ProbabilisticCombinationStrategyUtilities.combine(t1i_membership_degree.Item1, t1i_membership_degree.Item2,
+                                t2j_membership_degree.Item1, t2j_membership_degree.Item2, this.probCombinationStrategy);
+                            this.currentTupleLowerMembershipDegree.Item1 = tmp[0];
+                            this.currentTupleLowerMembershipDegree.Item2 = tmp[1];
+
                             return true;
                         }
                         else
@@ -115,10 +124,13 @@ namespace BLL.SQLProcessing
                 if (!isMatched)
                 {
                     this.currentTuple = s1.getCurrentTuple();
+                    //extract t1's membership degree into the current tuple's membership degree
+                    this.currentTupleLowerMembershipDegree = this.s1.getCurrentTupleMembershipDegree();
                     return true;
                 }
             }
             this.currentTuple = null;
+            this.currentTupleLowerMembershipDegree = (0, 0);
             return false;
 
             //while (!this.isReverse && s1.next())
@@ -344,5 +356,9 @@ namespace BLL.SQLProcessing
         }
         //public FPRDBSchema getSchema();
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.currentTupleLowerMembershipDegree;
+        }
     }
 }

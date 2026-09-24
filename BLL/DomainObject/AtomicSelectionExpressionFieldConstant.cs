@@ -95,33 +95,39 @@ namespace BLL.DomainObject
         {
             FieldType fieldType = schema.getFieldByName(field).getFieldInfo().getType();
             Type constantType = this.constant.GetType();
+            List<float> ans = new List<float>(2);
             
             if(fieldType == FieldType.INT || fieldType == FieldType.DIST_FUZZYSET_INT)
             {
                 if (!(this.constant is IntConstant || this.constant is FuzzySetConstant || this.constant is FloatConstant))
                     throw new InvalidCastException($"Can't compare field of type {fieldType.ToString()} with constant type {constantType.Name}");
                 if(this.constant is FloatConstant)
-                    return genericCalculateProbabilisticInterpretation<int, float>(currentTuple.getFieldContent<int>(field), FuzzySetUltilities.turnConstantToFuzzySet<float>(this.constant, this.metaDataMgr));
-                return genericCalculateProbabilisticInterpretation<int>(currentTuple.getFieldContent<int>(field),FuzzySetUltilities.turnConstantToFuzzySet<int>(this.constant, this.metaDataMgr));
+                    ans = genericCalculateProbabilisticInterpretation<int, float>(currentTuple.getFieldContent<int>(field), FuzzySetUltilities.turnConstantToFuzzySet<float>(this.constant, this.metaDataMgr));
+                else
+                    ans=genericCalculateProbabilisticInterpretation<int>(currentTuple.getFieldContent<int>(field),FuzzySetUltilities.turnConstantToFuzzySet<int>(this.constant, this.metaDataMgr));
             }
             else if (fieldType == FieldType.FLOAT || fieldType == FieldType.DIST_FUZZYSET_FLOAT || fieldType==FieldType.CONT_FUZZYSET)
             {
                 if(!(this.constant is FloatConstant || this.constant is IntConstant || this.constant is FuzzySetConstant))
-                    throw new InvalidCastException($"Can't compare field of type {fieldType.ToString()} with constant type {constantType.Name}"); 
-                return genericCalculateProbabilisticInterpretation<float>(currentTuple.getFieldContent<float>(field), FuzzySetUltilities.turnConstantToFuzzySet<float>(this.constant, this.metaDataMgr));
+                    throw new InvalidCastException($"Can't compare field of type {fieldType.ToString()} with constant type {constantType.Name}");
+                ans = genericCalculateProbabilisticInterpretation<float>(currentTuple.getFieldContent<float>(field), FuzzySetUltilities.turnConstantToFuzzySet<float>(this.constant, this.metaDataMgr));
             }
             else if (fieldType == FieldType.CHAR || fieldType == FieldType.VARCHAR || fieldType == FieldType.DIST_FUZZYSET_TEXT)
             {
                 if (!(this.constant is StringConstant || this.constant is FuzzySetConstant))
                     throw new InvalidCastException($"Can't compare field of type {fieldType.ToString()} with constant type {constantType.Name}");
-                return genericCalculateProbabilisticInterpretation<string>(currentTuple.getFieldContent<string>(field), FuzzySetUltilities.turnConstantToFuzzySet<string>(this.constant, this.metaDataMgr));
+                ans = genericCalculateProbabilisticInterpretation<string>(currentTuple.getFieldContent<string>(field), FuzzySetUltilities.turnConstantToFuzzySet<string>(this.constant, this.metaDataMgr));
             }
             else //if (fieldType == FieldType.BOOLEAN)
             {
                 if (!(this.constant is BooleanConstant || this.constant is FuzzySetConstant))
                     throw new InvalidCastException($"Can't compare field of type {fieldType.ToString()} with constant type {constantType.Name}");
-                return genericCalculateProbabilisticInterpretation<bool>(currentTuple.getFieldContent<bool>(field), FuzzySetUltilities.turnConstantToFuzzySet<bool>(this.constant, this.metaDataMgr));
+                ans = genericCalculateProbabilisticInterpretation<bool>(currentTuple.getFieldContent<bool>(field), FuzzySetUltilities.turnConstantToFuzzySet<bool>(this.constant, this.metaDataMgr));
             }
+
+            ans[0] *= currentTuple.getCurrentTupleMembershipDegree().Item1;
+            ans[1] *= currentTuple.getCurrentTupleMembershipDegree().Item2;
+            return ans;
         }
         public override List<SelectionExpression> getAtomicSelectionExpression()
         {

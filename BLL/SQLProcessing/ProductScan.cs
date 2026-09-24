@@ -1,4 +1,6 @@
-﻿using BLL.DomainObject;
+﻿using BLL.Common;
+using BLL.DomainObject;
+using BLL.Enums;
 using BLL.Exceptions;
 using BLL.Interfaces;
 using System;
@@ -14,11 +16,14 @@ namespace BLL.SQLProcessing
         private Scan s1;
         private Scan s2;
         private FPRDBSchema schema;
+        private ProbabilisticCombinationStrategy probCombinationStrategy;
         private List<AbstractFuzzyProbabilisticValue> currentTuple;
-        public ProductScan(Scan s1, Scan s2, FPRDBSchema schema)
+        private (float, float) currentTupleLowerMembershipDegree;
+        public ProductScan(Scan s1, Scan s2, FPRDBSchema schema, ProbabilisticCombinationStrategy probCombinationStrategy)
         {
             this.s1 = s1;
             this.s2 = s2;
+            this.probCombinationStrategy = probCombinationStrategy;
             this.schema = schema;
             s1.next();
         }
@@ -57,10 +62,18 @@ namespace BLL.SQLProcessing
                 {
                     this.currentTuple.Add(v);
                 }
+                //calculate the current tuple's membership degree
+                (float, float) t1i_membership_degree = s1.getCurrentTupleMembershipDegree();
+                (float, float) t2j_membership_degree = s2.getCurrentTupleMembershipDegree();
+                List<float> tmp = ProbabilisticCombinationStrategyUtilities.combine(t1i_membership_degree.Item1, t1i_membership_degree.Item2,
+                    t2j_membership_degree.Item1, t2j_membership_degree.Item2, this.probCombinationStrategy);
+                this.currentTupleLowerMembershipDegree.Item1 = tmp[0];
+                this.currentTupleLowerMembershipDegree.Item2 = tmp[1];
             }
             else
             {
                 this.currentTuple = null;
+                this.currentTupleLowerMembershipDegree = (0, 9);
             }
             return hasNext;
         }
@@ -89,5 +102,9 @@ namespace BLL.SQLProcessing
         //public FPRDBSchema getSchema();
         public List<AbstractFuzzyProbabilisticValue> getCurrentTuple() => this.currentTuple;
 
+        public (float, float) getCurrentTupleMembershipDegree()
+        {
+            return this.currentTupleLowerMembershipDegree;
+        }
     }
 }
