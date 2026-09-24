@@ -64,7 +64,7 @@ namespace BLL.SQLProcessing
             Plan plan = relPlans[0];
             for(int i=1; i<relPlans.Count; ++i)
             {
-                plan = new ProductPlan(plan, relPlans[i], this.metaDataMgr, this.dbMgr, data.cartesianProductList.probCombinationStrategyList[i]);
+                plan = new ProductPlan(plan, relPlans[i], this.metaDataMgr, this.dbMgr, data.cartesianProductList.probCombinationStrategyList[i-1]);
             }
             //create selection plan
             if(data.selectionCondition!=null)

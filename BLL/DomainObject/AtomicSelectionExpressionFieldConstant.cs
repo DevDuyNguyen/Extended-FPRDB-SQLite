@@ -103,7 +103,8 @@ namespace BLL.DomainObject
                     throw new InvalidCastException($"Can't compare field of type {fieldType.ToString()} with constant type {constantType.Name}");
                 if(this.constant is FloatConstant)
                     ans = genericCalculateProbabilisticInterpretation<int, float>(currentTuple.getFieldContent<int>(field), FuzzySetUltilities.turnConstantToFuzzySet<float>(this.constant, this.metaDataMgr));
-                ans=genericCalculateProbabilisticInterpretation<int>(currentTuple.getFieldContent<int>(field),FuzzySetUltilities.turnConstantToFuzzySet<int>(this.constant, this.metaDataMgr));
+                else
+                    ans=genericCalculateProbabilisticInterpretation<int>(currentTuple.getFieldContent<int>(field),FuzzySetUltilities.turnConstantToFuzzySet<int>(this.constant, this.metaDataMgr));
             }
             else if (fieldType == FieldType.FLOAT || fieldType == FieldType.DIST_FUZZYSET_FLOAT || fieldType==FieldType.CONT_FUZZYSET)
             {
