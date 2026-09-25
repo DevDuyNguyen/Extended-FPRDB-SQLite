@@ -541,11 +541,12 @@ namespace FPRDB_SQLite.GUI
             gridView3.Columns.Clear();
             gridView3.PopulateColumns();
 
+            GridColumn col;
             foreach (var field in schemaFields)
             {
                 string fieldName = field.getFieldName();
 
-                GridColumn col = gridView3.Columns[fieldName];
+                col = gridView3.Columns[fieldName];
                 if (col == null) continue;
 
                 col.Caption = fieldName;
@@ -553,6 +554,16 @@ namespace FPRDB_SQLite.GUI
                 col.OptionsColumn.ReadOnly = true;
                 col.Tag = field.getFieldInfo().getType();
             }
+            //Configure columns for tuple membership degree
+            col = gridView3.Columns[Names.lowerTupleMembershipDegree];
+            col.Caption = Names.lowerTupleMembershipDegree;
+            col.OptionsColumn.AllowEdit = true;
+            col.Tag = typeof(float);
+            col = gridView3.Columns[Names.upperTupleMembershipDegree];
+            col.Caption = Names.upperTupleMembershipDegree;
+            col.OptionsColumn.AllowEdit = true;
+            col.Tag = typeof(float);
+
 
             gridView3.BestFitColumns();
 
@@ -2156,12 +2167,17 @@ namespace FPRDB_SQLite.GUI
             _currentEditingRow = gridView3.FocusedRowHandle;
             _currentEditingColumnType = gridView3.FocusedColumn.Tag?.ToString() ?? string.Empty;
 
-            string fldName = this._currentEditingColumn;
-            this.selectedField = this._selectedRelation.fprdbSchema.fields.FirstOrDefault(n => n.getFieldName() == fldName);
-            this.selectedFieldType = selectedField.getFieldInfo().getType();
-            this.isSelectedFieldText = selectedFieldType == FieldType.CHAR || selectedFieldType == FieldType.VARCHAR || selectedFieldType == FieldType.DIST_FUZZYSET_TEXT;
+            if (this._currentEditingColumn != Names.lowerTupleMembershipDegree && this._currentEditingColumn != Names.upperTupleMembershipDegree)
+            {
+                string fldName = this._currentEditingColumn;
+                this.selectedField = this._selectedRelation.fprdbSchema.fields.FirstOrDefault(n => n.getFieldName() == fldName);
+                this.selectedFieldType = selectedField.getFieldInfo().getType();
+                this.isSelectedFieldText = selectedFieldType == FieldType.CHAR || selectedFieldType == FieldType.VARCHAR || selectedFieldType == FieldType.DIST_FUZZYSET_TEXT;
 
-            LoadFuzzyProbalisticValueDetail(fuzzyProbalisticValue);
+
+                LoadFuzzyProbalisticValueDetail(fuzzyProbalisticValue);
+            }
+            
         }
         // Hàm ngăn không cho xóa hết dòng (đối với cột khóa chính)
         private void gridView4_RowDeleting(object sender, DevExpress.Data.RowDeletingEventArgs e)
@@ -2260,12 +2276,16 @@ namespace FPRDB_SQLite.GUI
                             sbRow += $" {f.getFieldName()},";
                         }
                         sbRow = sbRow.TrimEnd(',') + ")";
+                        //extracted fuzzy probabilististic value entered by user for each attributed
                         sbRow += " VALUES ( ";
                         foreach (Field field in fields)
                         {
                             sbRow += $"{currentRow[field.getFieldName()]},";
                         }
                         sbRow = sbRow.TrimEnd(',') + " )";
+                        //extract user-input tuple membership degree
+                        sbRow += $"[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}]";
+
                         try
                         {
                             this.sqlProcessor.executeUpdate(sbRow);
@@ -2304,6 +2324,7 @@ namespace FPRDB_SQLite.GUI
                     {
                         List<string> pks = schema.primarykey;
                         List<string> setClauses = new List<string>();
+                        //SET pairs. Ex: ["attr1=123", "attr2=23"]
                         foreach (var field in fields)
                         {
                             string fName = field.getFieldName();
@@ -2314,6 +2335,7 @@ namespace FPRDB_SQLite.GUI
                             string formattedVal = newVal as string;
                             setClauses.Add($"{fName} = {formattedVal}");
                         }
+                        setClauses.Add($"tuple_membership_degree=[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}]");
 
                         // 2. Xây dựng phần WHERE (Dữ liệu ĐỊNH DANH CŨ)
                         string whereClause = "WHERE";
