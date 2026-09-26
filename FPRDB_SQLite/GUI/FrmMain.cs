@@ -2227,7 +2227,7 @@ namespace FPRDB_SQLite.GUI
                     //    continue;
                     //}
 
-                    sbRow += $" ({pk}={procssedFProbValue[0].Item1})[1,1] AND";
+                    sbRow += $" ({pk}={procssedFProbValue[0].Item1})[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}] AND";
                 }
                 int trailingAND = sbRow.LastIndexOf("AND");
                 sbRow = sbRow.Substring(0, trailingAND);
