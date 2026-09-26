@@ -1807,13 +1807,18 @@ namespace FPRDB_SQLite.GUI
             {
                 resultForGridView.Columns.Add(f.getFieldName(), typeof(string));
             }
+            //create columns for tuple membership degree
+            resultForGridView.Columns.Add(Names.lowerTupleMembershipDegree, typeof(float));
+            resultForGridView.Columns.Add(Names.upperTupleMembershipDegree, typeof(float));
+
             //Extract the result for grid view
-            string[] tupleForGridView = new string[schema.getFields().Count];
+            object[] tupleForGridView = new object[schema.getFields().Count+2];
             Field field;
             List<Field> fields = schema.getFields();
             while (iscan.next())
             {
-                for (int i = 0; i < schema.getFields().Count; ++i)
+                int i = 0;
+                for (; i < schema.getFields().Count; ++i)
                 {
                     field = fields[i];
                     switch (field.getFieldInfo().getType())
@@ -1840,6 +1845,8 @@ namespace FPRDB_SQLite.GUI
                             break;
                     }
                 }
+                tupleForGridView[i] = iscan.getCurrentTupleMembershipDegree().Item1;
+                tupleForGridView[i+1] = iscan.getCurrentTupleMembershipDegree().Item2;
                 resultForGridView.Rows.Add(tupleForGridView);
 
 
