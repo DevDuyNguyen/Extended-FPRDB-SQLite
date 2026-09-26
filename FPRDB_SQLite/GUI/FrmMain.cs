@@ -2346,7 +2346,7 @@ namespace FPRDB_SQLite.GUI
                             //[not done] not supported null yet
                             //string formattedOldVal = (oldPkVal == DBNull.Value) ? "NULL" : $"'{oldPkVal.ToString().Replace("'", "''")}'";
                             oldPkVal = this.extractValueFromTrueExactFuzzyProbabilisitcValue(oldPkVal);
-                            whereClause += $" ({pkName} = {oldPkVal})[1,1] AND";
+                            whereClause += $" ({pkName} = {oldPkVal})[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}] AND";
                         }
                         int trailingAND = whereClause.LastIndexOf("AND");
                         whereClause = whereClause.Substring(0, trailingAND);
