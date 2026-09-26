@@ -416,6 +416,9 @@ namespace FPRDB_SQLite.GUI
                     row[fieldName] = fprobValue.ToString();
                 }
             }
+            //extract the tuple's membership degree
+            row[Names.lowerTupleMembershipDegree] = s.getCurrentTupleMembershipDegree().Item1;
+            row[Names.upperTupleMembershipDegree] = s.getCurrentTupleMembershipDegree().Item2;
             return row;
         }
         // Method to reload the tabs of schema and relation after modifying
@@ -471,13 +474,17 @@ namespace FPRDB_SQLite.GUI
             List<Field> schemaFields = schema.fields;
             // Sử dụng DataTable để hiện thị thông tin Relation
             DataTable relationContent = new DataTable();
+            string tmpFieldName;
 
             foreach (var field in schemaFields)
             {
-                string fieldName = field.getFieldName();
-                DataColumn dataCol = new DataColumn(fieldName, typeof(string));
+                tmpFieldName = field.getFieldName();
+                DataColumn dataCol = new DataColumn(tmpFieldName, typeof(string));
                 relationContent.Columns.Add(dataCol);
             }
+            //Represent the tuple membership degree of each tuple in the relation
+            relationContent.Columns.Add(new DataColumn(Names.lowerTupleMembershipDegree, typeof(float)));
+            relationContent.Columns.Add(new DataColumn(Names.upperTupleMembershipDegree, typeof(float)));
 
             //fake data
             //Dictionary<string, string> row1 = new Dictionary<string, string>
@@ -534,11 +541,12 @@ namespace FPRDB_SQLite.GUI
             gridView3.Columns.Clear();
             gridView3.PopulateColumns();
 
+            GridColumn col;
             foreach (var field in schemaFields)
             {
                 string fieldName = field.getFieldName();
 
-                GridColumn col = gridView3.Columns[fieldName];
+                col = gridView3.Columns[fieldName];
                 if (col == null) continue;
 
                 col.Caption = fieldName;
@@ -546,6 +554,16 @@ namespace FPRDB_SQLite.GUI
                 col.OptionsColumn.ReadOnly = true;
                 col.Tag = field.getFieldInfo().getType();
             }
+            //Configure columns for tuple membership degree
+            col = gridView3.Columns[Names.lowerTupleMembershipDegree];
+            col.Caption = Names.lowerTupleMembershipDegree;
+            col.OptionsColumn.AllowEdit = true;
+            col.Tag = typeof(float);
+            col = gridView3.Columns[Names.upperTupleMembershipDegree];
+            col.Caption = Names.upperTupleMembershipDegree;
+            col.OptionsColumn.AllowEdit = true;
+            col.Tag = typeof(float);
+
 
             gridView3.BestFitColumns();
 
@@ -1789,13 +1807,18 @@ namespace FPRDB_SQLite.GUI
             {
                 resultForGridView.Columns.Add(f.getFieldName(), typeof(string));
             }
+            //create columns for tuple membership degree
+            resultForGridView.Columns.Add(Names.lowerTupleMembershipDegree, typeof(float));
+            resultForGridView.Columns.Add(Names.upperTupleMembershipDegree, typeof(float));
+
             //Extract the result for grid view
-            string[] tupleForGridView = new string[schema.getFields().Count];
+            object[] tupleForGridView = new object[schema.getFields().Count+2];
             Field field;
             List<Field> fields = schema.getFields();
             while (iscan.next())
             {
-                for (int i = 0; i < schema.getFields().Count; ++i)
+                int i = 0;
+                for (; i < schema.getFields().Count; ++i)
                 {
                     field = fields[i];
                     switch (field.getFieldInfo().getType())
@@ -1822,6 +1845,8 @@ namespace FPRDB_SQLite.GUI
                             break;
                     }
                 }
+                tupleForGridView[i] = iscan.getCurrentTupleMembershipDegree().Item1;
+                tupleForGridView[i+1] = iscan.getCurrentTupleMembershipDegree().Item2;
                 resultForGridView.Rows.Add(tupleForGridView);
 
 
@@ -2149,12 +2174,17 @@ namespace FPRDB_SQLite.GUI
             _currentEditingRow = gridView3.FocusedRowHandle;
             _currentEditingColumnType = gridView3.FocusedColumn.Tag?.ToString() ?? string.Empty;
 
-            string fldName = this._currentEditingColumn;
-            this.selectedField = this._selectedRelation.fprdbSchema.fields.FirstOrDefault(n => n.getFieldName() == fldName);
-            this.selectedFieldType = selectedField.getFieldInfo().getType();
-            this.isSelectedFieldText = selectedFieldType == FieldType.CHAR || selectedFieldType == FieldType.VARCHAR || selectedFieldType == FieldType.DIST_FUZZYSET_TEXT;
+            if (this._currentEditingColumn != Names.lowerTupleMembershipDegree && this._currentEditingColumn != Names.upperTupleMembershipDegree)
+            {
+                string fldName = this._currentEditingColumn;
+                this.selectedField = this._selectedRelation.fprdbSchema.fields.FirstOrDefault(n => n.getFieldName() == fldName);
+                this.selectedFieldType = selectedField.getFieldInfo().getType();
+                this.isSelectedFieldText = selectedFieldType == FieldType.CHAR || selectedFieldType == FieldType.VARCHAR || selectedFieldType == FieldType.DIST_FUZZYSET_TEXT;
 
-            LoadFuzzyProbalisticValueDetail(fuzzyProbalisticValue);
+
+                LoadFuzzyProbalisticValueDetail(fuzzyProbalisticValue);
+            }
+            
         }
         // Hàm ngăn không cho xóa hết dòng (đối với cột khóa chính)
         private void gridView4_RowDeleting(object sender, DevExpress.Data.RowDeletingEventArgs e)
@@ -2204,7 +2234,7 @@ namespace FPRDB_SQLite.GUI
                     //    continue;
                     //}
 
-                    sbRow += $" ({pk}={procssedFProbValue[0].Item1})[1,1] AND";
+                    sbRow += $" ({pk}={procssedFProbValue[0].Item1})[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}] AND";
                 }
                 int trailingAND = sbRow.LastIndexOf("AND");
                 sbRow = sbRow.Substring(0, trailingAND);
@@ -2253,12 +2283,16 @@ namespace FPRDB_SQLite.GUI
                             sbRow += $" {f.getFieldName()},";
                         }
                         sbRow = sbRow.TrimEnd(',') + ")";
+                        //extracted fuzzy probabilististic value entered by user for each attributed
                         sbRow += " VALUES ( ";
                         foreach (Field field in fields)
                         {
                             sbRow += $"{currentRow[field.getFieldName()]},";
                         }
                         sbRow = sbRow.TrimEnd(',') + " )";
+                        //extract user-input tuple membership degree
+                        sbRow += $"[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}]";
+
                         try
                         {
                             this.sqlProcessor.executeUpdate(sbRow);
@@ -2297,6 +2331,7 @@ namespace FPRDB_SQLite.GUI
                     {
                         List<string> pks = schema.primarykey;
                         List<string> setClauses = new List<string>();
+                        //SET pairs. Ex: ["attr1=123", "attr2=23"]
                         foreach (var field in fields)
                         {
                             string fName = field.getFieldName();
@@ -2307,6 +2342,7 @@ namespace FPRDB_SQLite.GUI
                             string formattedVal = newVal as string;
                             setClauses.Add($"{fName} = {formattedVal}");
                         }
+                        setClauses.Add($"tuple_membership_degree=[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}]");
 
                         // 2. Xây dựng phần WHERE (Dữ liệu ĐỊNH DANH CŨ)
                         string whereClause = "WHERE";
@@ -2317,7 +2353,7 @@ namespace FPRDB_SQLite.GUI
                             //[not done] not supported null yet
                             //string formattedOldVal = (oldPkVal == DBNull.Value) ? "NULL" : $"'{oldPkVal.ToString().Replace("'", "''")}'";
                             oldPkVal = this.extractValueFromTrueExactFuzzyProbabilisitcValue(oldPkVal);
-                            whereClause += $" ({pkName} = {oldPkVal})[1,1] AND";
+                            whereClause += $" ({pkName} = {oldPkVal})[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}] AND";
                         }
                         int trailingAND = whereClause.LastIndexOf("AND");
                         whereClause = whereClause.Substring(0, trailingAND);
