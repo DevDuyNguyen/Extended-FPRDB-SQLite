@@ -261,7 +261,7 @@ namespace BLL.SQLProcessing
 
                     //check if [a,b] isn't [0,0]
                     if (d.intervalProbLowerBoundList[j]==0 && d.intervalProbUpperBoundList[j]==0)
-                        throw new SemanticException("[a,b] of (v,[a,b]) must be different from [0,0]. If not, then v can't be a possible balue");
+                        throw new SemanticException("[a,b] of (v,[a,b]) must be different from [0,0]. If not, then v can't be a possible value");
 
                     /*check if user use string delimiter escaping, current version
                      * aren't designed with string delimiter escaping
@@ -378,14 +378,17 @@ namespace BLL.SQLProcessing
             else if (data is FieldFuzzProbValueModifyData)
             {
                 FieldFuzzProbValueModifyData data1 = (FieldFuzzProbValueModifyData)data;
-                //If update is field=probabilistic value, the interval must be within [0,1]
                 for (int i = 0; i < data1.fuzzyProbabilisticValue.valueList.Count; ++i)
                 {
+                    //If update is field=probabilistic value, the interval must be within [0,1]
                     if (data1.fuzzyProbabilisticValue.intervalProbLowerBoundList[i] < 0 || data1.fuzzyProbabilisticValue.intervalProbLowerBoundList[i] > 1
                         || data1.fuzzyProbabilisticValue.intervalProbUpperBoundList[i] < 0 || data1.fuzzyProbabilisticValue.intervalProbUpperBoundList[i] > 1)
                         throw new SemanticException("[a,b] must be within the range of [0,1]");
                     if (data1.fuzzyProbabilisticValue.intervalProbLowerBoundList[i] > data1.fuzzyProbabilisticValue.intervalProbUpperBoundList[i])
                         throw new SemanticException("a must be <= b in [a,b]");
+                    //If update is field=probabilistic value, the interval must be different from [0,0]
+                    if (data1.fuzzyProbabilisticValue.intervalProbLowerBoundList[i]==0 && data1.fuzzyProbabilisticValue.intervalProbUpperBoundList[i]==0)
+                        throw new SemanticException("[a,b] of (v,[a,b]) must be different from [0,0]. If not, then v can't be a possible value");
                 }
 
                 checkCompatibleInsertTypeAndFillFuzzySetConstant(
