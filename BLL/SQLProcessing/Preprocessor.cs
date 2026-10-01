@@ -259,6 +259,10 @@ namespace BLL.SQLProcessing
                     if (d.intervalProbLowerBoundList[j] > d.intervalProbUpperBoundList[j])
                         throw new SemanticException("a must be <= b in [a,b]");
 
+                    //check if [a,b] isn't [0,0]
+                    if (d.intervalProbLowerBoundList[j]==0 && d.intervalProbUpperBoundList[j]==0)
+                        throw new SemanticException("[a,b] of (v,[a,b]) must be different from [0,0]. If not, then v can't be a possible balue");
+
                     /*check if user use string delimiter escaping, current version
                      * aren't designed with string delimiter escaping
                      */

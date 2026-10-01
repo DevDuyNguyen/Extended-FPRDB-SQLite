@@ -8,6 +8,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Reflection.PortableExecutable;
 
 namespace BLL.Services
 {
@@ -349,18 +350,21 @@ namespace BLL.Services
                 );
             is_system_catalog_table_definition_exist(fprdb_inDatabaseSQLFile);
 
-            
-            
+
+
             /*check if there are any EFPRDB relations. If yes, then check whether each of them has 2 last attributes
              * LowerMembershipDegree and UpperMembershipDegree of type float to represent tuple's membership degree
             */
+            List<string> tmpRelName = new List<string>();
             using (IDataReader reader=this.dbMgr.executeQuery("SELECT name FROM sqlite_master WHERE type='table'"))
             {
-                while (reader.Read())
-                {
-                    if (!is_EFPRDB_relation_has_tuple_membership_degree(reader["name"] as string))
-                        throw new InvalidFPRDBDatabaseFile($"Relation {reader["name"] as string} doesn't have mechanism to represent tuple's membership degree");
-                }
+                while(reader.Read())
+                    tmpRelName.Add(reader["name"] as string);
+            }
+            foreach(string name in tmpRelName)
+            {
+                if (!is_EFPRDB_relation_has_tuple_membership_degree(name))
+                    throw new InvalidFPRDBDatabaseFile($"Relation {name} doesn't have mechanism to represent tuple's membership degree");
             }
 
 
