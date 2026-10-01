@@ -20,5 +20,16 @@ namespace BLL.Common
         };
         public static readonly string relation_lower_membership_degree = "lower_membership_degree";
         public static readonly string relation_upper_membership_degree = "upper_membership_degree";
+        public static readonly HashSet<string> systemCatalog = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "fprdb_RelationSchema", "fprdb_Relation", "fprdb_Type", "fprdb_Attribute",
+            "fprdb_FuzzySet", "fprdb_DiscreteFuzzySet", "fprdb_ContinousFuzzySet",
+            "FPRDB_Rel_FuzzSet", "fprdb_Constraint", "fprdb_inDatabaseSQLFile",
+            "fprdb_Type"
+        };
+        public static readonly HashSet<string> sqliteAutomaticallyCreatedTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "sqlite_sequence", "sqlite_stat1", "sqlite_stat4"
+        };
     }
 }

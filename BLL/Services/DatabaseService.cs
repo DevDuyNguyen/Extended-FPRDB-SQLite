@@ -8,6 +8,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Reflection.PortableExecutable;
 
 namespace BLL.Services
 {
@@ -194,7 +195,7 @@ namespace BLL.Services
 
         private bool isValidFPRDBDatabaseFileStructure()
         {
-            //the structure follows the System catalog
+            //check if the represenative structure for extended FPRDB's data aspect follows the System Catalog
             SystemCatalogTable fprdb_RelationSchema = new SystemCatalogTable(
                 "fprdb_RelationSchema",
                 new List<SystemCatalogAttribute>
@@ -348,6 +349,24 @@ namespace BLL.Services
                 null
                 );
             is_system_catalog_table_definition_exist(fprdb_inDatabaseSQLFile);
+
+
+
+            /*check if there are any EFPRDB relations. If yes, then check whether each of them has 2 last attributes
+             * LowerMembershipDegree and UpperMembershipDegree of type float to represent tuple's membership degree
+            */
+            List<string> tmpRelName = new List<string>();
+            using (IDataReader reader=this.dbMgr.executeQuery("SELECT name FROM sqlite_master WHERE type='table'"))
+            {
+                while(reader.Read())
+                    tmpRelName.Add(reader["name"] as string);
+            }
+            foreach(string name in tmpRelName)
+            {
+                if (!is_EFPRDB_relation_has_tuple_membership_degree(name))
+                    throw new InvalidFPRDBDatabaseFile($"Relation {name} doesn't have mechanism to represent tuple's membership degree");
+            }
+
 
             return true;
         }
@@ -593,6 +612,43 @@ namespace BLL.Services
         {
             this.dbMgr.closeDB();
         }
+        private bool is_EFPRDB_relation_has_tuple_membership_degree(string relName)
+        {
+            if (ReserveKeyWords.systemCatalog.Contains(relName) || ReserveKeyWords.sqliteAutomaticallyCreatedTables.Contains(relName))
+            {
+                return true;
+            }
 
+            //int noPrerequisiteToBeSatisfied = 3;
+            /* 1. Must have attribute lower_membership_degree of type real
+             * 2. Must have attribute upper_membership_degree of type real
+             * 3. upper_membership_degree must be the immediate after lower_membership_degree
+             * 4. lower_membership_degree and upper_membership_degree must be the last two attributes
+             */
+            using (IDataReader reader = this.dbMgr.executeQuery($"PRAGMA table_info('{relName}')"))
+            {
+                while (reader.Read())
+                {
+                    if ((reader["name"] as string) == "lower_membership_degree")
+                    {
+                        if ((reader["type"] as string) != "REAL")
+                            return false;
+
+                        if (reader.Read())
+                        {
+                            if ((reader["name"] as string) == "upper_membership_degree"
+                                && (reader["type"] as string) == "REAL"
+                                && !reader.Read())
+                                return true;
+                            else
+                                return false;
+                        }
+                        else
+                            return false;
+                    }
+                }
+            }
+            return false;
+        }
     }
 }
