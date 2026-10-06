@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using BLL.Exceptions;
+using BLL.Common;
 
 namespace BLL
 {
@@ -20,7 +21,7 @@ namespace BLL
     {
         private string connectionString;
         private IDbConnection connection;
-        private string dotExtension=".fprdb";
+        private string dotExtension=GlobalNames.fileExtention;
 
         public string getFPRDBDotExtenstion() => this.dotExtension;
 
