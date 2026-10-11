@@ -629,14 +629,14 @@ namespace BLL.Services
             {
                 while (reader.Read())
                 {
-                    if ((reader["name"] as string) == "lower_membership_degree")
+                    if ((reader["name"] as string) == ReserveKeyWords.relation_lower_membership_degree)
                     {
                         if ((reader["type"] as string) != "REAL")
                             return false;
 
                         if (reader.Read())
                         {
-                            if ((reader["name"] as string) == "upper_membership_degree"
+                            if ((reader["name"] as string) == ReserveKeyWords.relation_upper_membership_degree
                                 && (reader["type"] as string) == "REAL"
                                 && !reader.Read())
                                 return true;

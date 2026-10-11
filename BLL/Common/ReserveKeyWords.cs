@@ -18,8 +18,8 @@ namespace BLL.Common
             "relation", "on", "insert", "into", "values", "update", "set", "delete", "drop",
              "true", "false", "on", "from", "take", "null", "BELONG_TO_RELATION"
         };
-        public static readonly string relation_lower_membership_degree = "lower_membership_degree";
-        public static readonly string relation_upper_membership_degree = "upper_membership_degree";
+        public static readonly string relation_lower_membership_degree = "LowerMembershipDegree";
+        public static readonly string relation_upper_membership_degree = "UpperMembershipDegree";
         public static readonly HashSet<string> systemCatalog = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "fprdb_RelationSchema", "fprdb_Relation", "fprdb_Type", "fprdb_Attribute",
