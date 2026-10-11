@@ -2342,7 +2342,7 @@ namespace FPRDB_SQLite.GUI
                             string formattedVal = newVal as string;
                             setClauses.Add($"{fName} = {formattedVal}");
                         }
-                        setClauses.Add($"tuple_membership_degree=[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}]");
+                        setClauses.Add($"tuple_membership_degree=[{currentRow.Row[Names.lowerTupleMembershipDegree, DataRowVersion.Current]},{currentRow.Row[Names.upperTupleMembershipDegree, DataRowVersion.Current]}]");
 
                         // 2. Xây dựng phần WHERE (Dữ liệu ĐỊNH DANH CŨ)
                         string whereClause = "WHERE";
@@ -2353,7 +2353,7 @@ namespace FPRDB_SQLite.GUI
                             //[not done] not supported null yet
                             //string formattedOldVal = (oldPkVal == DBNull.Value) ? "NULL" : $"'{oldPkVal.ToString().Replace("'", "''")}'";
                             oldPkVal = this.extractValueFromTrueExactFuzzyProbabilisitcValue(oldPkVal);
-                            whereClause += $" ({pkName} = {oldPkVal})[{currentRow[Names.lowerTupleMembershipDegree]},{currentRow[Names.upperTupleMembershipDegree]}] AND";
+                            whereClause += $" ({pkName} = {oldPkVal})[{currentRow.Row[Names.lowerTupleMembershipDegree, DataRowVersion.Original]},{currentRow.Row[Names.upperTupleMembershipDegree, DataRowVersion.Original]}] AND";
                         }
                         int trailingAND = whereClause.LastIndexOf("AND");
                         whereClause = whereClause.Substring(0, trailingAND);
