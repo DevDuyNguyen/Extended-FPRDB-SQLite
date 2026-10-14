@@ -182,7 +182,7 @@ namespace FPRDB_SQLite.GUI
             ribbonControl.Name = "ribbonControl";
             ribbonControl.OptionsMenuMinWidth = 715;
             ribbonControl.Pages.AddRange(new DevExpress.XtraBars.Ribbon.RibbonPage[] { DatabaseRibbonPage, SchemaRibbonPage, RelationRibbonPage, QueryRibbonPage, pageFuzzySet });
-            ribbonControl.Size = new Size(970, 193);
+            ribbonControl.Size = new Size(1067, 193);
             ribbonControl.StatusBar = ribbonStatusBar;
             // 
             // buttonNew_pageHome
@@ -696,7 +696,7 @@ namespace FPRDB_SQLite.GUI
             ribbonStatusBar.Location = new Point(0, 569);
             ribbonStatusBar.Name = "ribbonStatusBar";
             ribbonStatusBar.Ribbon = ribbonControl;
-            ribbonStatusBar.Size = new Size(970, 30);
+            ribbonStatusBar.Size = new Size(1067, 30);
             // 
             // TreeView_imageList
             // 
@@ -731,8 +731,8 @@ namespace FPRDB_SQLite.GUI
             // 
             RelationsplitContainerControl.Panel2.Controls.Add(xtraTabControlDatabase);
             RelationsplitContainerControl.Panel2.Text = "Panel2";
-            RelationsplitContainerControl.Size = new Size(970, 376);
-            RelationsplitContainerControl.SplitterPosition = 250;
+            RelationsplitContainerControl.Size = new Size(1067, 376);
+            RelationsplitContainerControl.SplitterPosition = 275;
             RelationsplitContainerControl.TabIndex = 5;
             // 
             // layoutControl1
@@ -743,7 +743,7 @@ namespace FPRDB_SQLite.GUI
             layoutControl1.Name = "layoutControl1";
             layoutControl1.OptionsCustomizationForm.DesignTimeCustomizationFormPositionAndSize = new Rectangle(768, 123, 812, 500);
             layoutControl1.Root = Root;
-            layoutControl1.Size = new Size(250, 356);
+            layoutControl1.Size = new Size(275, 356);
             layoutControl1.TabIndex = 3;
             // 
             // treeView
@@ -755,7 +755,7 @@ namespace FPRDB_SQLite.GUI
             treeView.Location = new Point(12, 12);
             treeView.Name = "treeView";
             treeView.SelectedImageIndex = 0;
-            treeView.Size = new Size(226, 332);
+            treeView.Size = new Size(251, 332);
             treeView.TabIndex = 2;
             treeView.MouseDown += treeView_MouseDown;
             // 
@@ -765,7 +765,7 @@ namespace FPRDB_SQLite.GUI
             Root.GroupBordersVisible = false;
             Root.Items.AddRange(new DevExpress.XtraLayout.BaseLayoutItem[] { layoutControlItem1 });
             Root.Name = "Root";
-            Root.Size = new Size(250, 356);
+            Root.Size = new Size(275, 356);
             Root.TextVisible = false;
             // 
             // layoutControlItem1
@@ -776,7 +776,7 @@ namespace FPRDB_SQLite.GUI
             layoutControlItem1.MaxSize = new Size(600, 0);
             layoutControlItem1.MinSize = new Size(29, 29);
             layoutControlItem1.Name = "layoutControlItem1";
-            layoutControlItem1.Size = new Size(230, 336);
+            layoutControlItem1.Size = new Size(255, 336);
             layoutControlItem1.SizeConstraintsType = DevExpress.XtraLayout.SizeConstraintsType.Custom;
             layoutControlItem1.TextSize = new Size(0, 0);
             layoutControlItem1.TextVisible = false;
@@ -787,7 +787,7 @@ namespace FPRDB_SQLite.GUI
             xtraTabControlDatabase.Location = new Point(0, 0);
             xtraTabControlDatabase.Name = "xtraTabControlDatabase";
             xtraTabControlDatabase.SelectedTabPage = SchemaxtraTabPage;
-            xtraTabControlDatabase.Size = new Size(688, 356);
+            xtraTabControlDatabase.Size = new Size(760, 356);
             xtraTabControlDatabase.TabIndex = 1;
             xtraTabControlDatabase.TabPages.AddRange(new DevExpress.XtraTab.XtraTabPage[] { SchemaxtraTabPage, RelationxtraTabPage });
             xtraTabControlDatabase.SelectedPageChanged += xtraTabControlDatabase_SelectedPageChanged;
@@ -798,7 +798,7 @@ namespace FPRDB_SQLite.GUI
             SchemaxtraTabPage.Controls.Add(gridControlScheme);
             SchemaxtraTabPage.Margin = new Padding(6, 4, 6, 4);
             SchemaxtraTabPage.Name = "SchemaxtraTabPage";
-            SchemaxtraTabPage.Size = new Size(686, 326);
+            SchemaxtraTabPage.Size = new Size(758, 326);
             SchemaxtraTabPage.Text = "Schema";
             // 
             // gridControlScheme
@@ -809,7 +809,7 @@ namespace FPRDB_SQLite.GUI
             gridControlScheme.MenuManager = ribbonControl;
             gridControlScheme.Name = "gridControlScheme";
             gridControlScheme.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] { repositoryItemCalcEdit1, repositoryItemButtonEdit1, repositoryItemHeightType1, repositoryItemCheckEdit1 });
-            gridControlScheme.Size = new Size(686, 326);
+            gridControlScheme.Size = new Size(758, 326);
             gridControlScheme.TabIndex = 0;
             gridControlScheme.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] { gridView });
             // 
@@ -891,7 +891,7 @@ namespace FPRDB_SQLite.GUI
             RelationxtraTabPage.Controls.Add(splitContainerControl2);
             RelationxtraTabPage.Margin = new Padding(6, 4, 6, 4);
             RelationxtraTabPage.Name = "RelationxtraTabPage";
-            RelationxtraTabPage.Size = new Size(686, 326);
+            RelationxtraTabPage.Size = new Size(758, 326);
             RelationxtraTabPage.Text = "Relation";
             // 
             // splitContainerControl2
@@ -911,7 +911,7 @@ namespace FPRDB_SQLite.GUI
             splitContainerControl2.Panel2.Controls.Add(gridControlValueRelation);
             splitContainerControl2.Panel2.Controls.Add(panelControlRelation);
             splitContainerControl2.Panel2.Text = "Panel2";
-            splitContainerControl2.Size = new Size(686, 326);
+            splitContainerControl2.Size = new Size(758, 326);
             splitContainerControl2.SplitterPosition = 167;
             splitContainerControl2.TabIndex = 0;
             // 
@@ -922,7 +922,7 @@ namespace FPRDB_SQLite.GUI
             gridControlRelation.MainView = gridView3;
             gridControlRelation.MenuManager = ribbonControl;
             gridControlRelation.Name = "gridControlRelation";
-            gridControlRelation.Size = new Size(686, 167);
+            gridControlRelation.Size = new Size(758, 167);
             gridControlRelation.TabIndex = 0;
             gridControlRelation.UseEmbeddedNavigator = true;
             gridControlRelation.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] { gridView3 });
@@ -932,6 +932,7 @@ namespace FPRDB_SQLite.GUI
             // 
             gridView3.GridControl = gridControlRelation;
             gridView3.Name = "gridView3";
+            gridView3.OptionsView.ColumnAutoWidth = false;
             gridView3.OptionsView.ShowGroupPanel = false;
             gridView3.FocusedRowChanged += gridView3_FocusedRowChanged;
             gridView3.FocusedColumnChanged += gridView3_FocusedColumnChanged;
@@ -943,7 +944,7 @@ namespace FPRDB_SQLite.GUI
             gridControlValueRelation.MainView = gridView4;
             gridControlValueRelation.MenuManager = ribbonControl;
             gridControlValueRelation.Name = "gridControlValueRelation";
-            gridControlValueRelation.Size = new Size(686, 102);
+            gridControlValueRelation.Size = new Size(758, 102);
             gridControlValueRelation.TabIndex = 1;
             gridControlValueRelation.UseEmbeddedNavigator = true;
             gridControlValueRelation.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] { gridView4 });
@@ -994,7 +995,7 @@ namespace FPRDB_SQLite.GUI
             panelControlRelation.Dock = DockStyle.Top;
             panelControlRelation.Location = new Point(0, 0);
             panelControlRelation.Name = "panelControlRelation";
-            panelControlRelation.Size = new Size(686, 45);
+            panelControlRelation.Size = new Size(758, 45);
             panelControlRelation.TabIndex = 0;
             // 
             // popupMenuTreeView
@@ -1061,7 +1062,7 @@ namespace FPRDB_SQLite.GUI
             Appearance.Options.UseFont = true;
             AutoScaleDimensions = new SizeF(13F, 24F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(970, 599);
+            ClientSize = new Size(1067, 599);
             Controls.Add(RelationsplitContainerControl);
             Controls.Add(ribbonStatusBar);
             Controls.Add(ribbonControl);

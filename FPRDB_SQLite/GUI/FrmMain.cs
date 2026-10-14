@@ -540,6 +540,8 @@ namespace FPRDB_SQLite.GUI
 
             gridView3.Columns.Clear();
             gridView3.PopulateColumns();
+            //To see the whole content of tuple's attribute value
+            gridView3.BestFitColumns();
 
             GridColumn col;
             foreach (var field in schemaFields)
