@@ -88,7 +88,7 @@ namespace TestProject1.IntegrationTest
             RelationPlan p2 = new RelationPlan("DOCTOR2", metaMgr, dbMgr, compRoot.getParser(), compRoot.getConstraintService());
 
 
-            Plan p3 = new ProductPlan(p1, p2, metaMgr, dbMgr);
+            Plan p3 = new ProductPlan(p1, p2, metaMgr, dbMgr, BLL.Enums.ProbabilisticCombinationStrategy.CONJUNCTION_INDEPENDANCE);
             Scan res = p3.open();
             while (res.next())
             {

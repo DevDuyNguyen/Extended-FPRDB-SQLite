@@ -458,8 +458,9 @@ namespace TestProject1.IntegrationTest
                 fuzzyProbabilisticValues.Add(fuzzyProbabilisticValue);
 
                 data = new InsertData("rel1",
-                    new List<string> { "id", "name", "money" },
-                    fuzzyProbabilisticValues
+                    new List<string> { "id", "name", "money"},
+                    fuzzyProbabilisticValues,
+                    1.0f, 1.0f
                 );
                 Add(@"
                     INSERT INTO rel1(id, name, money)
@@ -1077,7 +1078,7 @@ namespace TestProject1.IntegrationTest
                 CompositionRoot compRoot = new CompositionRoot();
                 QueryData root = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1"), new SelectField("", "field2") },
-                    new List<string> { "rel1", "rel2" },
+                    new CartesianProductList(new List<string> { "rel1", "rel2" }, new List<ProbabilisticCombinationStrategy> { ProbabilisticCombinationStrategy.CONJUNCTION_INDEPENDANCE}),
                     null
                     );
                 Add("select field1,field2 from rel1, rel2", root);
@@ -1089,7 +1090,7 @@ namespace TestProject1.IntegrationTest
                     );
                 root = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1"), new SelectField("", "field2") },
-                    new List<string> { "rel1", "rel2" },
+                    new CartesianProductList(new List<string> { "rel1", "rel2" }, new List<ProbabilisticCombinationStrategy> { ProbabilisticCombinationStrategy.CONJUNCTION_INDEPENDANCE }),
                     selectionCondt
                     );
                 Add("select field1,field2 from rel1, rel2 where (field1=1)[1,1]", root);
@@ -1138,12 +1139,12 @@ namespace TestProject1.IntegrationTest
                 //true content:
                 QueryData l1_1=new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1"},
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 QueryData l1_2 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 QueryData root = new CompoundQueryData(l1_1, l1_2, SetConnective.INTERSECT, ProbabilisticCombinationStrategy.CONJUNCTION_IGNORANCE);
@@ -1151,18 +1152,18 @@ namespace TestProject1.IntegrationTest
 
                 l1_1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 l1_2 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 var l2_1= new CompoundQueryData(l1_1, l1_2, SetConnective.INTERSECT, ProbabilisticCombinationStrategy.CONJUNCTION_IGNORANCE);
                 var l2_2= new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 root = new CompoundQueryData(l2_1, l2_2, SetConnective.INTERSECT, ProbabilisticCombinationStrategy.CONJUNCTION_IGNORANCE);
@@ -1193,18 +1194,18 @@ namespace TestProject1.IntegrationTest
                 //true content:
                 QueryData l1_1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 QueryData l1_2 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 var l2_1 = new CompoundQueryData(l1_1, l1_2, SetConnective.INTERSECT, ProbabilisticCombinationStrategy.CONJUNCTION_IGNORANCE);
                 var l2_2= new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 QueryData root = new CompoundQueryData(l2_1, l2_2, SetConnective.UNION, ProbabilisticCombinationStrategy.DISJUNCTION_IGNORANCE);
@@ -1212,18 +1213,18 @@ namespace TestProject1.IntegrationTest
 
                 l1_1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 l1_2 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 l2_1 = new CompoundQueryData(l1_1, l1_2, SetConnective.UNION, ProbabilisticCombinationStrategy.DISJUNCTION_IGNORANCE);
                 l2_2 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField("", "field1") },
-                    new List<string> { "rel1" },
+                    new CartesianProductList(new List<string> { "rel1" }, null),
                     null
                     );
                 root = new CompoundQueryData(l2_1, l2_2, SetConnective.EXCEPT, ProbabilisticCombinationStrategy.DIFFERENCE_IGNORANCE);

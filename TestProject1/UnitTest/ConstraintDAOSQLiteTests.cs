@@ -172,7 +172,8 @@ namespace TestProject1.UnitTest
                                 new List<float>{1},
                                 new List<float>{1}
                                 )
-                        }
+                        },
+                        1.0f, 1.0f
                     ),
                     true
                 );
@@ -187,7 +188,8 @@ namespace TestProject1.UnitTest
                                 new List<float>{1},
                                 new List<float>{1}
                                 )
-                        }
+                        },
+                        1.0f, 1.0f
                     ),
                     true
                 );
@@ -207,7 +209,8 @@ namespace TestProject1.UnitTest
                                 new List<float>{1},
                                 new List<float>{1}
                                 )
-                        }
+                        },
+                        1.0f, 1.0f
                     ),
                     false
                 );
