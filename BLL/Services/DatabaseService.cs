@@ -521,13 +521,13 @@ namespace BLL.Services
         {
             if (filePath == default || filePath == null)
                 throw new InvalidOperationException("File path isn't provided");
-            //file dot extension is .fprdb
+            //file dot extension is .efprdb
             int dotExtensionStartIndex = filePath.LastIndexOf(".");
             if (dotExtensionStartIndex == -1)
-                throw new InvalidOperationException("The database file to be loaded must ends with .fprdb");
+                throw new InvalidOperationException($"The database file to be loaded must ends with {GlobalNames.fileExtention}");
             string dotExtension = filePath.Substring(dotExtensionStartIndex);
             if (dotExtension != this.dbMgr.getFPRDBDotExtenstion())
-                throw new InvalidOperationException("The database file to be loaded must ends with .fprdb");
+                throw new InvalidOperationException($"The database file to be loaded must ends with {GlobalNames.fileExtention}");
             //is a database file of sqlite
             this.dbMgr.loadDB(filePath);
             //check if the selected file follow the designed system catalog of FPRDB
@@ -629,14 +629,14 @@ namespace BLL.Services
             {
                 while (reader.Read())
                 {
-                    if ((reader["name"] as string) == "lower_membership_degree")
+                    if ((reader["name"] as string) == ReserveKeyWords.relation_lower_membership_degree)
                     {
                         if ((reader["type"] as string) != "REAL")
                             return false;
 
                         if (reader.Read())
                         {
-                            if ((reader["name"] as string) == "upper_membership_degree"
+                            if ((reader["name"] as string) == ReserveKeyWords.relation_upper_membership_degree
                                 && (reader["type"] as string) == "REAL"
                                 && !reader.Read())
                                 return true;

@@ -93,14 +93,18 @@ CREATE TABLE rel1 (
 	id TEXT,
 	att1 TEXT,
 	att2 TEXT,
-	att3 TEXT
+	att3 TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 
 CREATE TABLE rel2 (
 	id TEXT,
 	name TEXT,
 	age TEXT,
-	gender TEXT
+	gender TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 
 INSERT INTO fprdb_FuzzySet (oid, fuzzset_name, fuzzset_type_id)
@@ -161,14 +165,14 @@ VALUES
     (1, 'rel1', 1),
     (2, 'rel2', 2);
 	
-INSERT INTO rel1(id, att1, att2, att3)
+INSERT INTO rel1(id, att1, att2, att3, LowerMembershipDegree, UpperMembershipDegree)
 VALUES
-('{(1,[1,1])}', '{(about_2,[0.4,0.6]), (about_30,[0.4,0.6])}', '{(about_5point1,[0.4,0.6]), (1,[0.4,0.6])}', '{(young,[0.4,0.6]), (approx_15,[0.4,0.6])}'),
-('{(2,[1,1])}', '{(1,[0.4,0.5]), (about_30,[0.4,0.6])}', '{(31,[0.4,0.6]), (30,[0.4,0.6])}', '{(young,[0.4,0.6]), (22,[0.4,0.6])}');
+('{(1,[1,1])}', '{(about_2,[0.4,0.6]), (about_30,[0.4,0.6])}', '{(about_5point1,[0.4,0.6]), (1,[0.4,0.6])}', '{(young,[0.4,0.6]), (approx_15,[0.4,0.6])}', 0.95,1),
+('{(2,[1,1])}', '{(1,[0.4,0.5]), (about_30,[0.4,0.6])}', '{(31,[0.4,0.6]), (30,[0.4,0.6])}', '{(young,[0.4,0.6]), (22,[0.4,0.6])}', 0.95,1);
 
-INSERT INTO rel2(id,name,age,gender)
+INSERT INTO rel2(id,name,age,gender, LowerMembershipDegree, UpperMembershipDegree)
 VALUES
-('{(1,[1,1])}', '{("d1",[1,1])}', '{(1,[1,1])}', '{(True,[1,1])}');
+('{(1,[1,1])}', '{("d1",[1,1])}', '{(1,[1,1])}', '{(True,[1,1])}',1,1);
 
 	
 	

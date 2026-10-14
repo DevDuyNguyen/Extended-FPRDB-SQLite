@@ -94,32 +94,44 @@ CREATE TABLE patient1 (
     P_NAME   TEXT,
     P_AGE    TEXT,
     P_DISEASE TEXT,
-    P_COST   TEXT
+    P_COST   TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 
 CREATE TABLE doctor1 (
     D_ID   TEXT,
-    D_AGE  TEXT
+    D_AGE  TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 CREATE TABLE doctor2 (
     D_NAME  TEXT,
-    D_AGE   TEXT
+    D_AGE   TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 CREATE TABLE doctor3 (
     D_NAME   TEXT,
-    D_AGE    TEXT
+    D_AGE    TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 CREATE TABLE diagnose1 (
     P_ID     TEXT,
     D_ID     TEXT,
     P_AGE    TEXT,
-    DISEASE  TEXT
+    DISEASE  TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 CREATE TABLE diagnose2 (
     P_ID     TEXT,
     D_ID     TEXT,
     P_AGE    TEXT,
-    DISEASE  TEXT
+    DISEASE  TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 
 INSERT INTO fprdb_FuzzySet (oid, fuzzset_name, fuzzset_type_id)
@@ -204,58 +216,58 @@ VALUES
     (6, 'doctor3',  5);
 	
 --==========================
-INSERT INTO patient1 (P_ID, P_NAME, P_AGE, P_DISEASE, P_COST)
+INSERT INTO patient1 (P_ID, P_NAME, P_AGE, P_DISEASE, P_COST, LowerMembershipDegree, UpperMembershipDegree)
 VALUES 
     ('{("PT111",[1,1])}', '{("N.V.Ha",[1,1])}', '{(65, [1,1])}', 
      '{("lung cancer", [0.5, 0.5]), ("tuberculosis", [0.5, 0.5])}', 
-     '{(300, [0.5, 0.5]), (350, [0.5, 0.5])}'),
+     '{(300, [0.5, 0.5]), (350, [0.5, 0.5])}', 0.8, 0.9),
 
     ('{("PT112",[1,1])}', '{("T.V.Son",[1,1])}', '{(young, [1,1])}', 
      '{("hepatitis", [0.45, 0.65]), ("cirrhosis", [0.45, 0.65])}', 
-     '{(about_60, [0.4, 0.6]), (about_70, [0.4, 0.6])}'),
+     '{(about_60, [0.4, 0.6]), (about_70, [0.4, 0.6])}', 0.9, 1),
 
     ('{("PT113",[1,1])}', '{("L.T.Lan",[1,1])}', '{(middle_aged, [1,1])}', 
      '{("cholecystitis", [1,1])}', 
-     '{(8, [1,1])}');	
+     '{(8, [1,1])}', 1, 1);	
 	
-INSERT INTO doctor1 (D_ID, D_AGE)
+INSERT INTO doctor1 (D_ID, D_AGE, LowerMembershipDegree, UpperMembershipDegree)
 VALUES 
-    ('{("DT005",[1,1])}', '{(middle_aged,[1,1])}'),
-    ('{("DT093",[1,1])}', '{(approx_30,[1,1])}'),
-    ('{("DT102",[1,1])}', '{(55,[0.5,0.5]), (56,[0.5,0.5])}');
+    ('{("DT005",[1,1])}', '{(middle_aged,[1,1])}', 1, 1),
+    ('{("DT093",[1,1])}', '{(approx_30,[1,1])}', 1, 1),
+    ('{("DT102",[1,1])}', '{(55,[0.5,0.5]), (56,[0.5,0.5])}', 0.8, 1);
 	
 -- ==================== doctor2 ====================
 
-INSERT INTO doctor2 (D_NAME, D_AGE)
+INSERT INTO doctor2 (D_NAME, D_AGE, LowerMembershipDegree, UpperMembershipDegree)
 VALUES 
-    ('{("L.V.Cuong",[1,1])}', '{(30,[0.4,0.6]), (31,[0.4,0.6])}'),
-    ('{("N.V.Hung",[1,1])}', '{(middle_aged,[1,1])}'),
-    ('{("N.T.Dat",[1,1])}', '{(54,[0.5,0.5]), (55,[0.5,0.5])}');
+    ('{("L.V.Cuong",[1,1])}', '{(30,[0.4,0.6]), (31,[0.4,0.6])}', 0.9, 1),
+    ('{("N.V.Hung",[1,1])}', '{(middle_aged,[1,1])}', 1, 1),
+    ('{("N.T.Dat",[1,1])}', '{(54,[0.5,0.5]), (55,[0.5,0.5])}', 0.7, 0.8);
 
 
 -- ==================== diagnose1 ====================
 
-INSERT INTO diagnose1 (P_ID, D_ID, P_AGE, DISEASE)
+INSERT INTO diagnose1 (P_ID, D_ID, P_AGE, DISEASE, LowerMembershipDegree, UpperMembershipDegree)
 VALUES 
     ('{("PT226",[1,1])}', '{("DT093",[1,1])}', '{(65,[1,1])}', 
-     '{("lung cancer",[0.4,0.6]), ("tuberculosis",[0.4,0.6])}'),
+     '{("lung cancer",[0.4,0.6]), ("tuberculosis",[0.4,0.6])}', 0.9, 1),
 
     ('{("PT234",[1,1])}', '{("DT102",[1,1])}', '{(approx_15,[1,1])}', 
-     '{("hepatitis",[0.5,0.5]), ("cirrhosis",[0.5,0.5])}');
+     '{("hepatitis",[0.5,0.5]), ("cirrhosis",[0.5,0.5])}', 0.8, 0.9);
 
 
 -- ==================== diagnose2 ====================
 
-INSERT INTO diagnose2 (P_ID, D_ID, P_AGE, DISEASE)
+INSERT INTO diagnose2 (P_ID, D_ID, P_AGE, DISEASE, LowerMembershipDegree, UpperMembershipDegree)
 VALUES 
     ('{("PT383",[1,1])}', '{("DT102",[1,1])}', '{(69,[0.5,0.5]), (70,[0.5,0.5])}', 
-     '{("lung cancer",[1,1])}'),
+     '{("lung cancer",[1,1])}', 0.7, 0.9),
 
     ('{("PT234",[1,1])}', '{("DT102",[1,1])}', '{(young,[1,1])}', 
-     '{("hepatitis",[0.4,0.6]), ("gall-stone",[0.4,0.6])}'),
+     '{("hepatitis",[0.4,0.6]), ("gall-stone",[0.4,0.6])}', 0.8, 1),
 
     ('{("PT242",[1,1])}', '{("DT025",[1,1])}', '{(middle_aged,[1,1])}', 
-     '{("cholecystitis",[1,1])}');
+     '{("cholecystitis",[1,1])}', 0.9, 1);
 
 	
 	

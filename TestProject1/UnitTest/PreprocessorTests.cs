@@ -559,8 +559,8 @@ namespace TestProject1.UnitTest
                 Add(dL1, true);
 
                 CompoundQueryData dL2 = new CompoundQueryData(
-                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*")}, new List<string> { "DIAGNOSE1"}, null),
-                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*") }, new List<string> { "DIAGNOSE2" }, null),
+                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*")}, new CartesianProductList(new List<string> { "DIAGNOSE1" }, null), null),
+                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*") }, new CartesianProductList(new List<string> { "DIAGNOSE2" }, null), null),
                     SetConnective.INTERSECT,
                     ProbabilisticCombinationStrategy.CONJUNCTION_IGNORANCE
                     );
@@ -588,43 +588,43 @@ namespace TestProject1.UnitTest
 
                 BaseCartesianProductQueryData dL1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField(null, "DOCTOR_ID"), new SelectField(null, "DOCTOR_NAME") },
-                    new List<string> { "DOCTOR1"},
+                    new CartesianProductList(new List<string> { "DOCTOR1" }, null),
                     null
                     );
                 Add(dL1, new SemanticException($"field DOCTOR_NAME doesn't appears in any mentioned relation"));
 
                 dL1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField(null, "DOCTOR_ID")},
-                    new List<string> { "DOCTOR1" },
+                    new CartesianProductList(new List<string> { "DOCTOR1" }, null),
                     new AtomicSelectionCondition(new AtomicSelectionExpressionFieldConstant("DOCTOR_NAME", new StringConstant("abc"), CompareOperation.EQUAL, comp.getMetaDataManger()), 1, 1)
                     );
                 Add(dL1, new SemanticException($"field DOCTOR_NAME doesn't appears in any mentioned relation"));
 
                 dL1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField(null, "DOCTOR_ID"), new SelectField(null, "DOCTOR_NAME") },
-                    new List<string> { "DOCTOR1", "DOCTOR2" },
+                    new CartesianProductList(new List<string> { "DOCTOR1", "DOCTOR2" }, new List<ProbabilisticCombinationStrategy> { ProbabilisticCombinationStrategy.CONJUNCTION_INDEPENDANCE}),
                     new AtomicSelectionCondition(new AtomicSelectionExpressionFieldConstant("DOCTOR_ID", new StringConstant("abc"), CompareOperation.EQUAL, comp.getMetaDataManger()), 1, 1)
                     );
                 Add(dL1, new SemanticException($"Not cartesian product compatible because of common field D_AGE"));
 
                 dL1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField(null, "DOCTOR_ID")},
-                    new List<string> { "DOCTOR1" },
+                    new CartesianProductList(new List<string> { "DOCTOR1" }, null),
                     new AtomicSelectionCondition(new AtomicSelectionExpressionFieldConstant("DOCTOR_ID", new IntConstant(1), CompareOperation.EQUAL, comp.getMetaDataManger()), 1, 1)
                     );
                 Add(dL1, new SemanticException($"DOCTOR_ID EQUAL 1 is invalid"));
 
                 dL1 = new BaseCartesianProductQueryData(
                     new List<SelectField> { new SelectField(null, "DOCTOR_ID")},
-                    new List<string> { "DOCTOR1" },
+                    new CartesianProductList(new List<string> { "DOCTOR1" }, null),
                     new AtomicSelectionCondition(new AtomicSelectionExpressionFieldField("DOCTOR_ID", "D_AGE", ProbabilisticCombinationStrategy.CONJUNCTION_IGNORANCE), 1, 1)
                     );
                 Add(dL1, new SemanticException($"DOCTOR_ID = D_AGE is invalid"));
 
 
                 CompoundQueryData dL2 = new CompoundQueryData(
-                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*") }, new List<string> { "DIAGNOSE1" }, null),
-                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*") }, new List<string> { "DOCTOR1" }, null),
+                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*") }, new CartesianProductList(new List<string> { "DIAGNOSE1" }, null), null),
+                    new BaseCartesianProductQueryData(new List<SelectField> { new SelectField(null, "*") }, new CartesianProductList(new List<string> { "DOCTOR1" }, null), null),
                     SetConnective.INTERSECT,
                     ProbabilisticCombinationStrategy.CONJUNCTION_IGNORANCE
                     );

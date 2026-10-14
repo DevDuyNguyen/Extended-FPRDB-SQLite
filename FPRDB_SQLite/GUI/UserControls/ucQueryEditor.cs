@@ -120,6 +120,8 @@ namespace FPRDB_SQLite.GUI.GUI.UserControls
 
             gridControl.DataSource = dt;
             gridView.PopulateColumns();
+            
+
             gridView.OptionsBehavior.Editable = false;
             gridView.OptionsView.ShowGroupPanel = false;
 
@@ -131,6 +133,10 @@ namespace FPRDB_SQLite.GUI.GUI.UserControls
 
 
             gridControl.ForceInitialize();
+
+            //show the entire relation's attribute value in a cell
+            gridView.OptionsView.ColumnAutoWidth = false;
+            gridView.BestFitColumns();
 
             if (isFirstGrid)
             {

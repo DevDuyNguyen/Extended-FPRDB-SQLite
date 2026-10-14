@@ -81,6 +81,8 @@ namespace FPRDB_SQLite.GUI.UserControls
                 return;
             }
 
+            if (cboDataType.Text == "" || cboDataType.Text == null)
+                return;
             var type = getFuzzySetType();
             if (type == FieldType.INT && !int.TryParse(input, out _))
                 SetError(e, "Value must be an integer!");

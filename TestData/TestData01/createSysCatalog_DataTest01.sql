@@ -166,33 +166,43 @@ INSERT INTO FPRDB_Rel_FuzzSet (
 
 CREATE TABLE rel1 (
     id TEXT,
-    intDistFS TEXT
+    intDistFS TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 
 CREATE TABLE referencedRel (
     id TEXT,
-    age TEXT
+    age TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 
 CREATE TABLE referencingRel (
     id TEXT,
     fk_id TEXT,
-    age TEXT
+    age TEXT,
+	LowerMembershipDegree REAL,
+	UpperMembershipDegree REAL
 );
 
 INSERT INTO rel1 (
     id, 
-    intDistFS
+    intDistFS,
+	LowerMembershipDegree,
+	UpperMembershipDegree
 ) VALUES 
-('{(1,[1,1])}', '{(distFS1,[1,1])}'),
-('{(2,[1,1])}', '{(2,[1,1])}');
+('{(1,[1,1])}', '{(distFS1,[1,1])}',1,1),
+('{(2,[1,1])}', '{(2,[1,1])}',1,1);
 
 INSERT INTO referencedRel (
     id, 
-    age
+    age,
+	LowerMembershipDegree,
+	UpperMembershipDegree
 ) VALUES 
-('{(1,[1,1])}', '{(conFS1,[1,1])}'),
-('{(2,[1,1])}', '{(conFS1,[0.5,0.5]), (conFS1,[0.5,0.5])}');
+('{(1,[1,1])}', '{(conFS1,[1,1])}',1,1),
+('{(2,[1,1])}', '{(conFS1,[0.5,0.5]), (conFS1,[0.5,0.5])}',1,1);
 
-INSERT INTO referencingRel (id, fk_id, age) 
-VALUES ('{(1,[1,1])}', '{(1,[1,1])}', '{(conFS1,[1,1])}');
+INSERT INTO referencingRel (id, fk_id, age, LowerMembershipDegree,UpperMembershipDegree) 
+VALUES ('{(1,[1,1])}', '{(1,[1,1])}', '{(conFS1,[1,1])}',1,1);
